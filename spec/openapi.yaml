@@ -1,0 +1,242 @@
+openapi: 3.0.3
+info:
+  title: Gym Reservation System API
+  description: パーソナルジム向け予約管理SaaSのAPI定義
+  version: 1.0.0
+paths:
+  /api/user-app/users/register:
+    post:
+      summary: ユーザー登録
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegistration"
+      responses:
+        "200":
+          description: 登録成功
+  /api/user-app/users/login:
+    post:
+      summary: ユーザーログイン
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLogin"
+      responses:
+        "200":
+          description: ログイン成功
+  /api/user-app/trainers:
+    get:
+      summary: トレーナー一覧取得
+      responses:
+        "200":
+          description: トレーナー一覧
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Trainer"
+  /api/user-app/reservations:
+    post:
+      summary: 予約作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Reservation"
+      responses:
+        "200":
+          description: 予約成功
+  /api/user-app/reservations/{id}:
+    delete:
+      summary: 予約キャンセル
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: キャンセル成功
+  /api/user-app/reservations/history:
+    get:
+      summary: 予約履歴
+      responses:
+        "200":
+          description: 予約履歴
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReservationHistory"
+  /api/admin-app/trainers/login:
+    post:
+      summary: トレーナーログイン
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLogin"
+      responses:
+        "200":
+          description: ログイン成功
+  /api/admin-app/trainers:
+    get:
+      summary: トレーナー一覧取得
+      responses:
+        "200":
+          description: トレーナー一覧
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Trainer"
+  /api/admin-app/trainers/schedule:
+    put:
+      summary: トレーナーのスケジュール管理
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Schedule"
+      responses:
+        "200":
+          description: スケジュール更新成功
+  /api/admin-app/trainers/reservations:
+    get:
+      summary: 予約状況の確認
+      responses:
+        "200":
+          description: 予約状況
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReservationStatus"
+  /api/admin-app/trainers/reservations/{id}/cancel:
+    delete:
+      summary: トレーナーによる予約キャンセル
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: キャンセル成功
+  /api/admin-app/trainers/register:
+    post:
+      summary: 新しいトレーナーの登録
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegistration"
+      responses:
+        "200":
+          description: 登録成功
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    UserRegistration:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - name
+        - email
+        - password
+    UserLogin:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+    Trainer:
+      type: object
+      properties:
+        name:
+          type: string
+        bio:
+          type: string
+        specialty:
+          type: string
+        available_times:
+          type: array
+          items:
+            type: string
+    Reservation:
+      type: object
+      properties:
+        datetime:
+          type: string
+          format: date-time
+        trainer_id:
+          type: string
+        session_length:
+          type: string
+      required:
+        - datetime
+        - trainer_id
+        - session_length
+    ReservationHistory:
+      type: object
+      properties:
+        datetime:
+          type: string
+          format: date-time
+        trainer_name:
+          type: string
+        session_length:
+          type: string
+        status:
+          type: string
+    Schedule:
+      type: object
+      properties:
+        available_times:
+          type: array
+          items:
+            type: string
+      required:
+        - available_times
+    ReservationStatus:
+      type: object
+      properties:
+        datetime:
+          type: string
+          format: date-time
+        user_name:
+          type: string
+        session_length:
+          type: string
+        status:
+          type: string
+security:
+  - bearerAuth: []

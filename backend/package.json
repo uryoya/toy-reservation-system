@@ -1,0 +1,30 @@
+{
+  "name": "reservation-backend",
+  "version": "1.0.0",
+  "main": "dist/main.js",
+  "type": "module",
+  "scripts": {
+    "start": "node dist/main.js",
+    "dev": "tsx watch src/main.ts",
+    "build": "tsc"
+  },
+  "imports": {
+    "#mod/iam": "./dist/modules/iam/index.js",
+    "#mod/profile": "./dist/modules/profile/index.js",
+    "#mod/reservation": "./dist/modules/reservation/index.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "hono": "^4.6.16"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@types/node": "^20.11.17",
+    "eslint": "^9.18.0",
+    "eslint-import-resolver-typescript": "^3.7.0",
+    "eslint-plugin-import": "^2.31.0",
+    "tsx": "^4.7.1",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0"
+  }
+}
