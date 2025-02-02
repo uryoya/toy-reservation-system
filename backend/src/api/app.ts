@@ -1,7 +1,13 @@
 import { Hono } from "hono";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { LoginUserAccount, RegisterUserAccount } from "#mod/iam";
 import { logger } from "hono/logger";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import {
+  AddTrainerAccount,
+  Authenticate,
+  LoginUserAccount,
+  RegisterUserAccount,
+} from "#mod/iam";
+import { bearer } from "./middleware.js";
 
 type Context = {
   Variables: {
@@ -61,6 +67,40 @@ const userApp = new Hono<Context>()
     }
   });
 
+const trainerApp = new Hono<Context>().post(
+  "/trainers/add",
+  bearer(),
+  async (c) => {
+    const body = await c.req.json();
+    const authenticate = new Authenticate(c.var.supabase);
+    const addTrainerAccount = new AddTrainerAccount(
+      c.var.supabase,
+      authenticate
+    );
+
+    const command = {
+      accessToken: c.var.accessToken,
+      email: body.email,
+      password: body.password,
+    };
+
+    try {
+      const result = await addTrainerAccount.execute(command);
+      c.status(201);
+      return c.json(result);
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        c.status(403);
+        return c.json({ error: error.message });
+      } else {
+        c.status(500);
+        return c.json({ error: "Internal server error" });
+      }
+    }
+  }
+);
+
 export const app = new Hono<Context>()
   .basePath("/api")
   .use(logger())
@@ -69,9 +109,10 @@ export const app = new Hono<Context>()
       "supabase",
       createClient(
         process.env.SUPABASE_API_URL!,
-        process.env.SUPABASE_ANON_KEY!
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
       )
     );
     await next();
   })
-  .route("/user-app", userApp);
+  .route("/user-app", userApp)
+  .route("/trainer-app", trainerApp);

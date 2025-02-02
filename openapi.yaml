@@ -136,9 +136,9 @@ paths:
       responses:
         "200":
           description: キャンセル成功
-  /api/admin-app/trainers/register:
+  /api/admin-app/trainers/add:
     post:
-      summary: 新しいトレーナーの登録
+      summary: 新しいトレーナーの追加
       requestBody:
         required: true
         content:
