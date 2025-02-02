@@ -4,6 +4,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
   AddTrainerAccount,
   Authenticate,
+  LoginTrainerAccount,
   LoginUserAccount,
   RegisterUserAccount,
 } from "#mod/iam";
@@ -67,10 +68,8 @@ const userApp = new Hono<Context>()
     }
   });
 
-const trainerApp = new Hono<Context>().post(
-  "/trainers/add",
-  bearer(),
-  async (c) => {
+const trainerApp = new Hono<Context>()
+  .post("/trainers/add", bearer(), async (c) => {
     const body = await c.req.json();
     const authenticate = new Authenticate(c.var.supabase);
     const addTrainerAccount = new AddTrainerAccount(
@@ -98,8 +97,31 @@ const trainerApp = new Hono<Context>().post(
         return c.json({ error: "Internal server error" });
       }
     }
-  }
-);
+  })
+  .post("/trainers/login", async (c) => {
+    const body = await c.req.json();
+    const loginTrainerAccount = new LoginTrainerAccount(c.var.supabase);
+
+    const command = {
+      email: body.email,
+      password: body.password,
+    };
+
+    try {
+      const result = await loginTrainerAccount.execute(command);
+      c.status(201);
+      return c.json(result);
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        c.status(403);
+        return c.json({ error: error.message });
+      } else {
+        c.status(500);
+        return c.json({ error: "Internal server error" });
+      }
+    }
+  });
 
 export const app = new Hono<Context>()
   .basePath("/api")

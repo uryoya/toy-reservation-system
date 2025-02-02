@@ -6,7 +6,7 @@ export type Command = {
 };
 
 export type Result = {
-  user: {
+  trainer: {
     id: string;
     email: string;
   };
@@ -17,9 +17,9 @@ export type Result = {
 };
 
 /**
- * ユーザーログイン
+ * トレーナーログイン
  */
-export class LoginUserAccount {
+export class LoginTrainerAccount {
   constructor(private readonly supabase: SupabaseClient) {}
 
   async execute(command: Command): Promise<Result> {
@@ -34,12 +34,12 @@ export class LoginUserAccount {
     if (!user.email || !user.user_metadata?.role) {
       throw new Error("認証で想定外のエラーが発生しました");
     }
-    if (user.user_metadata.role !== "USER") {
+    if (user.user_metadata.role !== "TRAINER") {
       throw new Error("ログインできません");
     }
 
     const result: Result = {
-      user: {
+      trainer: {
         id: user.id,
         email: user.email,
       },

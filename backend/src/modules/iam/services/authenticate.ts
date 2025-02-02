@@ -30,7 +30,7 @@ export class Authenticate {
       throw new Error("認証で想定外のエラーが発生しました");
     }
     if (user.user_metadata.role !== command.role) {
-      throw new Error("権限が不正です");
+      throw new Error("アクセスできません");
     }
 
     const result: Result = {
