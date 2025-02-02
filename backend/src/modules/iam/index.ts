@@ -1,1 +1,1 @@
-export const description = "IAM module for managing users and roles";
+export * from "./services/registerUserAccount.js";

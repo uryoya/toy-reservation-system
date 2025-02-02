@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node dist/main.js",
-    "dev": "tsx watch src/main.ts",
+    "dev": "dotenvx run -- tsx watch src/main.ts",
     "build": "tsc"
   },
   "imports": {
@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",
+    "@supabase/supabase-js": "^2.48.1",
     "hono": "^4.6.16"
   },
   "devDependencies": {

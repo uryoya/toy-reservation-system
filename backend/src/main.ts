@@ -1,11 +1,12 @@
-import { description as iamDescription } from "#mod/iam";
-import { description as profileDescription } from "#mod/profile";
-import { description as reservationDescription } from "#mod/reservation";
+import { serve } from "@hono/node-server";
+import { app } from "./api/app.js";
 
 const main = () => {
-  console.log("module iam:", iamDescription);
-  console.log("module profile:", profileDescription);
-  console.log("module reservation:", reservationDescription);
+  serve({
+    fetch: app.fetch,
+    port: 8080,
+  });
+  console.log("Server is running on http://localhost:8080");
 };
 
 main();
