@@ -2,8 +2,10 @@ import type { PrismaClient } from "@prisma/client";
 import { TZDate } from "@date-fns/tz";
 import type { TrainerScheduleRepository } from "../domain/repositories/trainerSchedule.repository.js";
 import { TrainerId, YearMonth } from "../domain/models/values.js";
-import { TrainerSchedule } from "../domain/models/trainerSchedule.aggregate.js";
-import { MonthlyTrainerSchedule } from "../domain/models/monthlyTrainerSchedule.entity.js";
+import {
+  MonthlySchedule,
+  TrainerSchedule,
+} from "../domain/models/trainerSchedule.aggregate.js";
 
 export class PrismaTrainerScheduleRepository
   implements TrainerScheduleRepository
@@ -25,10 +27,7 @@ export class PrismaTrainerScheduleRepository
           const dates = s.availableDates.map(
             (d) => new TZDate(s.year, s.month - 1, d, data.timezone)
           );
-          return [
-            yearMonth.toString(),
-            new MonthlyTrainerSchedule(yearMonth, dates),
-          ];
+          return [yearMonth.toString(), new MonthlySchedule(yearMonth, dates)];
         })
       );
       const trainerSchedule = new TrainerSchedule(
@@ -58,11 +57,12 @@ export class PrismaTrainerScheduleRepository
 
       if (exists) {
         if (exists.aggVersion === schedule.__version) {
-          // await tx.trainerSchedule.delete({
-          //   where: { id: schedule.id.toString() },
-          // });
-          await tx.trainerSchedule.update({
+          await tx.trainerSchedule.delete({
+            where: { id: schedule.id.toString() },
+          });
+          await tx.trainerSchedule.create({
             data: {
+              id: schedule.id.toString(),
               timezone: schedule.timezone,
               schedules: {
                 createMany: {
@@ -76,9 +76,6 @@ export class PrismaTrainerScheduleRepository
                 },
               },
               aggVersion: schedule.__version + 1,
-            },
-            where: {
-              id: schedule.id.toString(),
             },
           });
         } else {

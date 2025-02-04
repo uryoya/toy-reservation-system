@@ -1,23 +1,25 @@
 import { TZDate } from "@date-fns/tz";
-import type { Aggregate, Clone } from "#lib/domain-model";
+import type { Aggregate, Clone, Entity } from "#lib/domain-model";
 import type { YearMonth, TrainerId, TimeZone } from "./values.js";
-import { MonthlyTrainerSchedule } from "./monthlyTrainerSchedule.entity.js";
-
-interface Props {
-  readonly monthlySchedules: Map<string, MonthlyTrainerSchedule>;
-}
 
 /**
  * トレーナーのスケジュール
  */
+type TrainerScheduleProps = {
+  readonly monthlySchedules: Map<string, MonthlySchedule>;
+};
+
 export class TrainerSchedule
-  implements Aggregate<TrainerId>, Props, Clone<TrainerSchedule, Props>
+  implements
+    Aggregate<TrainerId>,
+    TrainerScheduleProps,
+    Clone<TrainerSchedule, TrainerScheduleProps>
 {
   public readonly timezone: TimeZone = "Asia/Tokyo";
 
   constructor(
     readonly id: TrainerId,
-    readonly monthlySchedules: Map<string, MonthlyTrainerSchedule>,
+    readonly monthlySchedules: Map<string, MonthlySchedule>,
     readonly __version: number
   ) {}
 
@@ -38,10 +40,7 @@ export class TrainerSchedule
       throw new Error("過去の日付は指定できません");
     }
 
-    const monthlySchedule = new MonthlyTrainerSchedule(
-      yearMonth,
-      availableTzDates
-    );
+    const monthlySchedule = new MonthlySchedule(yearMonth, availableTzDates);
 
     return this.clone({
       monthlySchedules: new Map(this.monthlySchedules).set(
@@ -51,11 +50,48 @@ export class TrainerSchedule
     });
   }
 
-  clone(overwrite: Partial<Props>): TrainerSchedule {
+  clone(overwrite: Partial<TrainerScheduleProps>): TrainerSchedule {
     return new TrainerSchedule(
       this.id,
       overwrite.monthlySchedules ?? this.monthlySchedules,
       this.__version
     );
+  }
+}
+
+/**
+ * 月別トレーナースケジュール
+ */
+type MonthlyScheduleProps = {
+  readonly availableDates: TZDate[];
+};
+
+export class MonthlySchedule
+  implements
+    Entity<YearMonth, "yearMonth">,
+    MonthlyScheduleProps,
+    Clone<MonthlySchedule, MonthlyScheduleProps>
+{
+  constructor(
+    readonly yearMonth: YearMonth,
+    readonly availableDates: TZDate[]
+  ) {
+    if (availableDates.some((date) => !yearMonth.includes(date))) {
+      throw new Error("出勤日はスケジュールの年月に含まれている必要があります");
+    }
+  }
+
+  clone(overwrite: Partial<MonthlyScheduleProps>): MonthlySchedule {
+    return new MonthlySchedule(
+      this.yearMonth,
+      overwrite.availableDates ?? this.availableDates
+    );
+  }
+
+  toJSON() {
+    return {
+      yearMonth: this.yearMonth,
+      availableDates: this.availableDates,
+    };
   }
 }
