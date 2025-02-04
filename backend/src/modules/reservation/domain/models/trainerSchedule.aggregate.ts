@@ -1,5 +1,5 @@
 import { TZDate } from "@date-fns/tz";
-import type { Aggregate, Clone, Entity } from "#lib/domain-model";
+import type { Aggregate, Entity } from "#lib/domain-model";
 import type { YearMonth, TrainerId, TimeZone } from "./values.js";
 
 /**
@@ -9,12 +9,7 @@ type TrainerScheduleProps = {
   readonly monthlySchedules: Map<string, MonthlySchedule>;
 };
 
-export class TrainerSchedule
-  implements
-    Aggregate<TrainerId>,
-    TrainerScheduleProps,
-    Clone<TrainerSchedule, TrainerScheduleProps>
-{
+export class TrainerSchedule implements Aggregate<TrainerId> {
   public readonly timezone: TimeZone = "Asia/Tokyo";
 
   constructor(
@@ -50,7 +45,7 @@ export class TrainerSchedule
     });
   }
 
-  clone(overwrite: Partial<TrainerScheduleProps>): TrainerSchedule {
+  private clone(overwrite: Partial<TrainerScheduleProps>): TrainerSchedule {
     return new TrainerSchedule(
       this.id,
       overwrite.monthlySchedules ?? this.monthlySchedules,
@@ -66,12 +61,7 @@ type MonthlyScheduleProps = {
   readonly availableDates: TZDate[];
 };
 
-export class MonthlySchedule
-  implements
-    Entity<YearMonth, "yearMonth">,
-    MonthlyScheduleProps,
-    Clone<MonthlySchedule, MonthlyScheduleProps>
-{
+export class MonthlySchedule implements Entity<YearMonth, "yearMonth"> {
   constructor(
     readonly yearMonth: YearMonth,
     readonly availableDates: TZDate[]
@@ -81,7 +71,7 @@ export class MonthlySchedule
     }
   }
 
-  clone(overwrite: Partial<MonthlyScheduleProps>): MonthlySchedule {
+  private clone(overwrite: Partial<MonthlyScheduleProps>): MonthlySchedule {
     return new MonthlySchedule(
       this.yearMonth,
       overwrite.availableDates ?? this.availableDates

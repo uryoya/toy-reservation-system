@@ -9,8 +9,3 @@ export type Aggregate<Id, IdKey extends string = "id"> = {
 export type Entity<Id, IdKey extends string = "id"> = {
   readonly [K in IdKey]: Id;
 };
-
-/** 集約またはエンティティの複製 */
-export type Clone<T, Props> = {
-  clone: (overwrite: Partial<Props>) => T;
-};
