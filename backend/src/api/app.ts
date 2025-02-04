@@ -4,6 +4,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
   AddTrainerAccount,
   Authenticate,
+  CreateInitialTrainerAccount,
   LoginTrainerAccount,
   LoginUserAccount,
   RegisterUserAccount,
@@ -75,6 +76,32 @@ const userApp = new Hono<Context>()
   });
 
 const trainerApp = new Hono<Context>()
+  .post("/trainers/init", async (c) => {
+    const body = await c.req.json();
+    const createInitialTrainerAccount = new CreateInitialTrainerAccount(
+      c.var.supabase
+    );
+
+    const command = {
+      email: body.email,
+      password: body.password,
+    };
+
+    try {
+      const result = await createInitialTrainerAccount.execute(command);
+      c.status(201);
+      return c.json(result);
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        c.status(403);
+        return c.json({ error: error.message });
+      } else {
+        c.status(500);
+        return c.json({ error: "Internal server error" });
+      }
+    }
+  })
   .post("/trainers/add", bearer(), async (c) => {
     const body = await c.req.json();
     const authenticate = new Authenticate(c.var.supabase);
