@@ -5,7 +5,8 @@
     "rootDir": "src",
     "outDir": "dist",
     "paths": {
-      "#mod/*": ["./src/modules/*"]
+      "#mod/*": ["./src/modules/*"],
+      "#lib/*": ["./src/lib/*"]
     },
     "strict": true,
     "verbatimModuleSyntax": true,

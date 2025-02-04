@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model TrainerSchedule {
+  id         String                @id @db.Uuid
+  timezone   String
+  schedules  TrainerScheduleLine[]
+  aggVersion Int                   @map("__version")
+}
+
+model TrainerScheduleLine {
+  id             String
+  year           Int
+  month          Int
+  availableDates Int[]
+
+  trainerSchedule TrainerSchedule @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  @@id([id, year, month])
+}

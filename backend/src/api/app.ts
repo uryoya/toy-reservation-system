@@ -8,11 +8,17 @@ import {
   LoginUserAccount,
   RegisterUserAccount,
 } from "#mod/iam";
+import {
+  CreateMonthlyTrainerSchedule,
+  PrismaTrainerScheduleRepository,
+} from "#mod/reservation";
 import { bearer } from "./middleware.js";
+import type { PrismaClient } from "@prisma/client";
 
 type Context = {
   Variables: {
     supabase: SupabaseClient;
+    prisma: PrismaClient;
   };
 };
 
@@ -121,10 +127,45 @@ const trainerApp = new Hono<Context>()
         return c.json({ error: "Internal server error" });
       }
     }
+  })
+  .post("/trainers/schedules", bearer(), async (c) => {
+    const body = await c.req.json();
+    const authenticate = new Authenticate(c.var.supabase);
+    const trainerScheduleRepository = new PrismaTrainerScheduleRepository(
+      c.var.prisma
+    );
+    const createTrainerSchedule = new CreateMonthlyTrainerSchedule(
+      authenticate,
+      trainerScheduleRepository
+    );
+
+    const command = {
+      accessToken: c.var.accessToken,
+      timestamp: new Date(),
+      form: {
+        year: body.year,
+        month: body.month,
+        dates: body.dates,
+      },
+    };
+
+    try {
+      const result = await createTrainerSchedule.execute(command);
+      c.status(201);
+      return c.json(result);
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        c.status(403);
+        return c.json({ error: error.message });
+      } else {
+        c.status(500);
+        return c.json({ error: "Internal server error" });
+      }
+    }
   });
 
 export const app = new Hono<Context>()
-  .basePath("/api")
   .use(logger())
   .use(async (c, next) => {
     c.set(
@@ -136,5 +177,6 @@ export const app = new Hono<Context>()
     );
     await next();
   })
+  .basePath("/api")
   .route("/user-app", userApp)
   .route("/trainer-app", trainerApp);
