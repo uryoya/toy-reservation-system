@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node dist/main.js",
     "dev": "dotenvx run -- tsx watch src/main.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "test": "vitest"
   },
   "imports": {
     "#mod/iam": "./dist/modules/iam/index.js",
@@ -31,6 +32,7 @@
     "eslint-plugin-import": "^2.31.0",
     "tsx": "^4.7.1",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0"
+    "typescript-eslint": "^8.20.0",
+    "vitest": "^3.0.5"
   }
 }

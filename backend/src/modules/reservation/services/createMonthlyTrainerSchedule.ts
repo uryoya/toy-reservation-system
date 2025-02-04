@@ -34,6 +34,8 @@ export class CreateMonthlyTrainerSchedule {
 
     const schedule = await this.trainerScheduleRepository.load(trainer.id);
 
+    console.log(schedule);
+
     const newSchedule = schedule.addMonthlySchedule(
       new YearMonth(form.year, form.month),
       form.dates,

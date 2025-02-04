@@ -11,29 +11,43 @@ export class PrismaTrainerScheduleRepository
   constructor(private readonly prisma: PrismaClient) {}
 
   async load(id: string) {
-    const data = await this.prisma.trainerSchedule.findUniqueOrThrow({
+    const data = await this.prisma.trainerSchedule.findUnique({
       include: {
         schedules: true,
       },
       where: { id },
     });
 
-    const monthlySchedules = new Map(
-      data.schedules.map((s) => {
-        const yearMonth = new YearMonth(s.year, s.month);
-        const dates = s.availableDates.map(
-          (d) => new TZDate(s.year, s.month, d, data.timezone)
-        );
-        return [yearMonth, new MonthlyTrainerSchedule(yearMonth, dates)];
-      })
-    );
-    const trainerSchedule = new TrainerSchedule(
-      new TrainerId(data.id),
-      monthlySchedules,
-      data.aggVersion
+    if (data) {
+      const monthlySchedules = new Map(
+        data.schedules.map((s) => {
+          const yearMonth = new YearMonth(s.year, s.month);
+          const dates = s.availableDates.map(
+            (d) => new TZDate(s.year, s.month - 1, d, data.timezone)
+          );
+          return [
+            yearMonth.toString(),
+            new MonthlyTrainerSchedule(yearMonth, dates),
+          ];
+        })
+      );
+      const trainerSchedule = new TrainerSchedule(
+        new TrainerId(data.id),
+        monthlySchedules,
+        data.aggVersion
+      );
+
+      return trainerSchedule;
+    }
+
+    // データが存在しない場合は空のスケジュールを返す
+    const initTrainerSchedule = new TrainerSchedule(
+      new TrainerId(id),
+      new Map(),
+      0
     );
 
-    return trainerSchedule;
+    return initTrainerSchedule;
   }
 
   async save(schedule: TrainerSchedule) {
@@ -44,12 +58,11 @@ export class PrismaTrainerScheduleRepository
 
       if (exists) {
         if (exists.aggVersion === schedule.__version) {
-          await tx.trainerSchedule.delete({
-            where: { id: schedule.id.toString() },
-          });
-          await tx.trainerSchedule.create({
+          // await tx.trainerSchedule.delete({
+          //   where: { id: schedule.id.toString() },
+          // });
+          await tx.trainerSchedule.update({
             data: {
-              id: schedule.id.toString(),
               timezone: schedule.timezone,
               schedules: {
                 createMany: {
@@ -62,7 +75,10 @@ export class PrismaTrainerScheduleRepository
                   ),
                 },
               },
-              aggVersion: schedule.__version,
+              aggVersion: schedule.__version + 1,
+            },
+            where: {
+              id: schedule.id.toString(),
             },
           });
         } else {

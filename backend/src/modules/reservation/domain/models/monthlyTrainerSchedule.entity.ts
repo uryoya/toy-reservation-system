@@ -19,7 +19,7 @@ export class MonthlyTrainerSchedule
     readonly yearMonth: YearMonth,
     readonly availableDates: TZDate[]
   ) {
-    if (!availableDates.every((date) => yearMonth.includes(date))) {
+    if (availableDates.some((date) => !yearMonth.includes(date))) {
       throw new Error("出勤日はスケジュールの年月に含まれている必要があります");
     }
   }
@@ -29,5 +29,12 @@ export class MonthlyTrainerSchedule
       this.yearMonth,
       overwrite.availableDates ?? this.availableDates
     );
+  }
+
+  toJSON() {
+    return {
+      yearMonth: this.yearMonth,
+      availableDates: this.availableDates,
+    };
   }
 }

@@ -15,7 +15,7 @@ model TrainerSchedule {
 }
 
 model TrainerScheduleLine {
-  id             String
+  id             String @db.Uuid
   year           Int
   month          Int
   availableDates Int[]

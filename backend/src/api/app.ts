@@ -14,7 +14,7 @@ import {
   PrismaTrainerScheduleRepository,
 } from "#mod/reservation";
 import { bearer } from "./middleware.js";
-import type { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 type Context = {
   Variables: {
@@ -195,13 +195,15 @@ const trainerApp = new Hono<Context>()
 export const app = new Hono<Context>()
   .use(logger())
   .use(async (c, next) => {
-    c.set(
-      "supabase",
-      createClient(
-        process.env.SUPABASE_API_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      )
+    const supabase = createClient(
+      process.env.SUPABASE_API_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
+    const prisma = new PrismaClient();
+
+    c.set("supabase", supabase);
+    c.set("prisma", prisma);
+
     await next();
   })
   .basePath("/api")

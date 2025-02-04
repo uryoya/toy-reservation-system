@@ -4,7 +4,7 @@ import type { YearMonth, TrainerId, TimeZone } from "./values.js";
 import { MonthlyTrainerSchedule } from "./monthlyTrainerSchedule.entity.js";
 
 interface Props {
-  readonly monthlySchedules: Map<YearMonth, MonthlyTrainerSchedule>;
+  readonly monthlySchedules: Map<string, MonthlyTrainerSchedule>;
 }
 
 /**
@@ -17,7 +17,7 @@ export class TrainerSchedule
 
   constructor(
     readonly id: TrainerId,
-    readonly monthlySchedules: Map<YearMonth, MonthlyTrainerSchedule>,
+    readonly monthlySchedules: Map<string, MonthlyTrainerSchedule>,
     readonly __version: number
   ) {}
 
@@ -27,11 +27,12 @@ export class TrainerSchedule
     availableDates: number[],
     now: Date
   ): TrainerSchedule {
-    if (this.monthlySchedules.has(yearMonth)) {
+    if (this.monthlySchedules.has(yearMonth.toString())) {
       throw new Error("指定された年月のスケジュールは既に存在します");
     }
     const availableTzDates = availableDates.map(
-      (date) => new TZDate(yearMonth.year, yearMonth.month, date, this.timezone)
+      (date) =>
+        new TZDate(yearMonth.year, yearMonth.month - 1, date, this.timezone)
     );
     if (availableTzDates.some((date) => date < now)) {
       throw new Error("過去の日付は指定できません");
@@ -44,7 +45,7 @@ export class TrainerSchedule
 
     return this.clone({
       monthlySchedules: new Map(this.monthlySchedules).set(
-        yearMonth,
+        yearMonth.toString(),
         monthlySchedule
       ),
     });
