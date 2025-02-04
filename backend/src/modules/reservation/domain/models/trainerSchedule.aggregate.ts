@@ -10,7 +10,7 @@ export class TrainerSchedule implements Aggregate<TrainerId> {
 
   public readonly timezone: TimeZone = "Asia/Tokyo";
 
-  constructor(readonly id: TrainerId, shifts: WorkShift[], readonly __version: number) {
+  constructor(readonly id: TrainerId, shifts: WorkShift[], readonly createdAt: Date, readonly __version: number) {
     this.#shifts = new Map(shifts.map((shift) => [shift.id, shift]));
   }
 
@@ -18,8 +18,17 @@ export class TrainerSchedule implements Aggregate<TrainerId> {
     return this.#shifts.values().toArray();
   }
 
-  addShift(start: TZDate, end: TZDate, timestamp: Date): TrainerSchedule {
-    const newShift = new WorkShift(WorkShiftId.from(crypto.randomUUID()), start, end, timestamp);
+  create(trainerId: TrainerId, timestamp: Date): TrainerSchedule {
+    return new TrainerSchedule(trainerId, [], timestamp, 0);
+  }
+
+  addShift(start: Date, end: Date, timestamp: Date): TrainerSchedule {
+    const newShift = new WorkShift(
+      WorkShiftId.from(crypto.randomUUID()),
+      new TZDate(start, this.timezone),
+      new TZDate(end, this.timezone),
+      timestamp
+    );
 
     if (newShift.overlaps(this.shifts)) {
       throw new Error("既存のシフトと重複するシフトを追加することはできません");
@@ -60,7 +69,7 @@ export class TrainerSchedule implements Aggregate<TrainerId> {
   }
 
   private clone(overwrite: Partial<CloneableTrainerScheduleProps>): TrainerSchedule {
-    return new TrainerSchedule(this.id, overwrite.shifts ?? this.shifts, this.__version);
+    return new TrainerSchedule(this.id, overwrite.shifts ?? this.shifts, this.createdAt, this.__version);
   }
 }
 

@@ -8,19 +8,20 @@ datasource db {
 }
 
 model TrainerSchedule {
-  id         String                @id @db.Uuid
-  timezone   String
-  schedules  TrainerScheduleLine[]
-  aggVersion Int                   @map("__version")
+  trainerId String             @id @db.Uuid
+  timezone  String
+  shifts    TrainerWorkShift[]
+  createdAt DateTime           @default(now())
+
+  aggVersion Int @default(0)
 }
 
-model TrainerScheduleLine {
-  id             String @db.Uuid
-  year           Int
-  month          Int
-  availableDates Int[]
+model TrainerWorkShift {
+  id        String   @id @db.Uuid
+  trainerId String
+  start     DateTime
+  end       DateTime
+  createdAt DateTime @default(now())
 
-  trainerSchedule TrainerSchedule @relation(fields: [id], references: [id], onDelete: Cascade)
-
-  @@id([id, year, month])
+  schedule TrainerSchedule @relation(fields: [trainerId], references: [trainerId])
 }
