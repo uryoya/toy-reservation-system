@@ -1,2 +1,2 @@
-export { CreateMonthlyTrainerSchedule } from "./services/createMonthlyTrainerSchedule.js";
+export { CreateTrainerSchedule } from "./services/createTrainerSchedule.js";
 export { PrismaTrainerScheduleRepository } from "./repositories/prismaTrainerSchedule.repository.js";

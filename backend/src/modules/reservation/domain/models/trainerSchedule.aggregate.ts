@@ -18,7 +18,7 @@ export class TrainerSchedule implements Aggregate<TrainerId> {
     return this.#shifts.values().toArray();
   }
 
-  create(trainerId: TrainerId, timestamp: Date): TrainerSchedule {
+  static create(trainerId: TrainerId, timestamp: Date): TrainerSchedule {
     return new TrainerSchedule(trainerId, [], timestamp, 0);
   }
 

@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { PrismaClient } from "@prisma/client";
 import {
   AddTrainerAccount,
   Authenticate,
@@ -9,12 +10,8 @@ import {
   LoginUserAccount,
   RegisterUserAccount,
 } from "#mod/iam";
-import {
-  CreateMonthlyTrainerSchedule,
-  PrismaTrainerScheduleRepository,
-} from "#mod/reservation";
+import { CreateTrainerSchedule, PrismaTrainerScheduleRepository } from "#mod/reservation";
 import { bearer } from "./middleware.js";
-import { PrismaClient } from "@prisma/client";
 
 type Context = {
   Variables: {
@@ -78,9 +75,10 @@ const userApp = new Hono<Context>()
 const trainerApp = new Hono<Context>()
   .post("/trainers/init", async (c) => {
     const body = await c.req.json();
-    const createInitialTrainerAccount = new CreateInitialTrainerAccount(
-      c.var.supabase
-    );
+    const authenticate = new Authenticate(c.var.supabase);
+    const trainerScheduleRepository = new PrismaTrainerScheduleRepository(c.var.prisma);
+    const createTrainerSchedule = new CreateTrainerSchedule(authenticate, trainerScheduleRepository);
+    const createInitialTrainerAccount = new CreateInitialTrainerAccount(c.var.supabase, createTrainerSchedule);
 
     const command = {
       email: body.email,
@@ -105,10 +103,9 @@ const trainerApp = new Hono<Context>()
   .post("/trainers/add", bearer(), async (c) => {
     const body = await c.req.json();
     const authenticate = new Authenticate(c.var.supabase);
-    const addTrainerAccount = new AddTrainerAccount(
-      c.var.supabase,
-      authenticate
-    );
+    const trainerScheduleRepository = new PrismaTrainerScheduleRepository(c.var.prisma);
+    const createTrainerSchedule = new CreateTrainerSchedule(authenticate, trainerScheduleRepository);
+    const addTrainerAccount = new AddTrainerAccount(c.var.supabase, authenticate, createTrainerSchedule);
 
     const command = {
       accessToken: c.var.accessToken,
@@ -154,51 +151,42 @@ const trainerApp = new Hono<Context>()
         return c.json({ error: "Internal server error" });
       }
     }
-  })
-  .post("/trainers/schedules", bearer(), async (c) => {
-    const body = await c.req.json();
-    const authenticate = new Authenticate(c.var.supabase);
-    const trainerScheduleRepository = new PrismaTrainerScheduleRepository(
-      c.var.prisma
-    );
-    const createTrainerSchedule = new CreateMonthlyTrainerSchedule(
-      authenticate,
-      trainerScheduleRepository
-    );
-
-    const command = {
-      accessToken: c.var.accessToken,
-      timestamp: new Date(),
-      form: {
-        year: body.year,
-        month: body.month,
-        dates: body.dates,
-      },
-    };
-
-    try {
-      const result = await createTrainerSchedule.execute(command);
-      c.status(201);
-      return c.json(result);
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Error) {
-        c.status(403);
-        return c.json({ error: error.message });
-      } else {
-        c.status(500);
-        return c.json({ error: "Internal server error" });
-      }
-    }
   });
+// .post("/trainers/schedules", bearer(), async (c) => {
+//   const body = await c.req.json();
+//   const authenticate = new Authenticate(c.var.supabase);
+//   const trainerScheduleRepository = new PrismaTrainerScheduleRepository(c.var.prisma);
+
+//   const command = {
+//     accessToken: c.var.accessToken,
+//     timestamp: new Date(),
+//     form: {
+//       year: body.year,
+//       month: body.month,
+//       dates: body.dates,
+//     },
+//   };
+
+//   try {
+//     const result = await createTrainerSchedule.execute(command);
+//     c.status(201);
+//     return c.json(result);
+//   } catch (error) {
+//     console.error(error);
+//     if (error instanceof Error) {
+//       c.status(403);
+//       return c.json({ error: error.message });
+//     } else {
+//       c.status(500);
+//       return c.json({ error: "Internal server error" });
+//     }
+//   }
+// });
 
 export const app = new Hono<Context>()
   .use(logger())
   .use(async (c, next) => {
-    const supabase = createClient(
-      process.env.SUPABASE_API_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabase = createClient(process.env.SUPABASE_API_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
     const prisma = new PrismaClient();
 
     c.set("supabase", supabase);

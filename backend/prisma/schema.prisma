@@ -18,7 +18,7 @@ model TrainerSchedule {
 
 model TrainerWorkShift {
   id        String   @id @db.Uuid
-  trainerId String
+  trainerId String   @db.Uuid
   start     DateTime
   end       DateTime
   createdAt DateTime @default(now())
