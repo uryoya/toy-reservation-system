@@ -40,14 +40,18 @@ export class TrainerSchedule implements Aggregate<TrainerId> {
     return this.clone({ shifts: updatedShifts.values().toArray() });
   }
 
-  editShift(shiftId: WorkShiftId, start?: TZDate, end?: TZDate): TrainerSchedule {
+  editShift(shiftId: WorkShiftId, start?: Date, end?: Date): TrainerSchedule {
     const shift = this.#shifts.get(shiftId);
     if (!shift) {
       throw new Error("指定されたシフトが存在しません");
     }
 
-    const editedShift = shift.edit(start, end);
-    if (editedShift.overlaps(this.shifts)) {
+    const editedShift = shift.edit(start && new TZDate(start, this.timezone), end && new TZDate(end, this.timezone));
+    const otherShifts = this.#shifts
+      .values()
+      .filter((s) => s.id !== editedShift.id)
+      .toArray();
+    if (editedShift.overlaps(otherShifts)) {
       throw new Error("既存のシフトと重複するシフトを追加することはできません");
     }
 

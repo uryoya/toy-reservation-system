@@ -10,7 +10,12 @@ import {
   LoginUserAccount,
   RegisterUserAccount,
 } from "#mod/iam";
-import { AddTrainerWorkShift, CreateTrainerSchedule, PrismaTrainerScheduleRepository } from "#mod/reservation";
+import {
+  AddTrainerWorkShift,
+  CreateTrainerSchedule,
+  EditTrainerWorkShift,
+  PrismaTrainerScheduleRepository,
+} from "#mod/reservation";
 import { bearer } from "./middleware.js";
 
 type Context = {
@@ -169,6 +174,40 @@ const trainerApp = new Hono<Context>()
 
     try {
       const result = await addTrainerWorkShift.execute(command);
+      c.status(201);
+      return c.json(result);
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        c.status(403);
+        return c.json({ error: error.message });
+      } else {
+        c.status(500);
+        return c.json({ error: "Internal server error" });
+      }
+    }
+  })
+  .post("/trainers/schedules/:id", bearer(), async (c) => {
+    const shiftId = c.req.param("id");
+    const body = await c.req.json();
+    const authenticate = new Authenticate(c.var.supabase);
+    const trainerScheduleRepository = new PrismaTrainerScheduleRepository(c.var.prisma);
+    const editTrainerWorkShift = new EditTrainerWorkShift(authenticate, trainerScheduleRepository);
+
+    const command = {
+      accessToken: c.var.accessToken,
+      timestamp: new Date(),
+      form: {
+        id: shiftId,
+        start: body.start && new Date(body.start),
+        end: body.end && new Date(body.end),
+      },
+    };
+
+    console.log(command);
+
+    try {
+      const result = await editTrainerWorkShift.execute(command);
       c.status(201);
       return c.json(result);
     } catch (error) {
