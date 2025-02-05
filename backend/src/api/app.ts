@@ -2,6 +2,8 @@ import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { PrismaClient } from "@prisma/client";
+import { TZDate } from "@date-fns/tz";
+import { endOfMonth, startOfMonth } from "date-fns";
 import {
   AddTrainerAccount,
   Authenticate,
@@ -157,6 +159,31 @@ const trainerApp = new Hono<Context>()
         return c.json({ error: "Internal server error" });
       }
     }
+  })
+  .get("/trainers/schedules", bearer(), async (c) => {
+    const year = c.req.query("year") ?? new Date().getFullYear();
+    const month = c.req.query("month") ?? new Date().getMonth() + 1;
+    const authenticate = new Authenticate(c.var.supabase);
+
+    const { account: trainer } = await authenticate.execute({ accessToken: c.var.accessToken, role: "TRAINER" });
+
+    const queryMonth = new TZDate(+year, +month - 1, 1, "Asia/Tokyo");
+    const schedule = await c.var.prisma.trainerWorkShift.findMany({
+      select: {
+        id: true,
+        start: true,
+        end: true,
+      },
+      where: {
+        trainerId: trainer.id,
+        start: {
+          gte: startOfMonth(queryMonth),
+          lte: endOfMonth(queryMonth),
+        },
+      },
+    });
+
+    return c.json(schedule);
   })
   .post("/trainers/schedules", bearer(), async (c) => {
     const body = await c.req.json();
