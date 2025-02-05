@@ -54,6 +54,7 @@ export class PrismaTrainerScheduleRepository implements TrainerScheduleRepositor
               })),
             },
           },
+          createdAt: schedule.createdAt,
           aggVersion: schedule.__version + 1,
         },
       });

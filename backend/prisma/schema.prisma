@@ -13,7 +13,7 @@ model TrainerSchedule {
   shifts    TrainerWorkShift[]
   createdAt DateTime           @default(now())
 
-  aggVersion Int @default(0)
+  aggVersion Int @default(0) @map("__version")
 }
 
 model TrainerWorkShift {
@@ -23,5 +23,5 @@ model TrainerWorkShift {
   end       DateTime
   createdAt DateTime @default(now())
 
-  schedule TrainerSchedule @relation(fields: [trainerId], references: [trainerId])
+  schedule TrainerSchedule @relation(fields: [trainerId], references: [trainerId], onDelete: Cascade)
 }

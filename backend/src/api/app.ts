@@ -10,7 +10,7 @@ import {
   LoginUserAccount,
   RegisterUserAccount,
 } from "#mod/iam";
-import { CreateTrainerSchedule, PrismaTrainerScheduleRepository } from "#mod/reservation";
+import { AddTrainerWorkShift, CreateTrainerSchedule, PrismaTrainerScheduleRepository } from "#mod/reservation";
 import { bearer } from "./middleware.js";
 
 type Context = {
@@ -151,37 +151,37 @@ const trainerApp = new Hono<Context>()
         return c.json({ error: "Internal server error" });
       }
     }
+  })
+  .post("/trainers/schedules", bearer(), async (c) => {
+    const body = await c.req.json();
+    const authenticate = new Authenticate(c.var.supabase);
+    const trainerScheduleRepository = new PrismaTrainerScheduleRepository(c.var.prisma);
+    const addTrainerWorkShift = new AddTrainerWorkShift(authenticate, trainerScheduleRepository);
+
+    const command = {
+      accessToken: c.var.accessToken,
+      timestamp: new Date(),
+      form: {
+        start: new Date(body.start),
+        end: new Date(body.end),
+      },
+    };
+
+    try {
+      const result = await addTrainerWorkShift.execute(command);
+      c.status(201);
+      return c.json(result);
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        c.status(403);
+        return c.json({ error: error.message });
+      } else {
+        c.status(500);
+        return c.json({ error: "Internal server error" });
+      }
+    }
   });
-// .post("/trainers/schedules", bearer(), async (c) => {
-//   const body = await c.req.json();
-//   const authenticate = new Authenticate(c.var.supabase);
-//   const trainerScheduleRepository = new PrismaTrainerScheduleRepository(c.var.prisma);
-
-//   const command = {
-//     accessToken: c.var.accessToken,
-//     timestamp: new Date(),
-//     form: {
-//       year: body.year,
-//       month: body.month,
-//       dates: body.dates,
-//     },
-//   };
-
-//   try {
-//     const result = await createTrainerSchedule.execute(command);
-//     c.status(201);
-//     return c.json(result);
-//   } catch (error) {
-//     console.error(error);
-//     if (error instanceof Error) {
-//       c.status(403);
-//       return c.json({ error: error.message });
-//     } else {
-//       c.status(500);
-//       return c.json({ error: "Internal server error" });
-//     }
-//   }
-// });
 
 export const app = new Hono<Context>()
   .use(logger())
