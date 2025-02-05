@@ -8,8 +8,6 @@ export type Command = {
   timestamp: Date;
   form: {
     id: string;
-    start?: Date;
-    end?: Date;
   };
 };
 
@@ -18,9 +16,9 @@ export type Result = {
 };
 
 /**
- * トレーナーのシフトを編集する
+ * トレーナーのシフトを削除する
  */
-export class EditTrainerWorkShift {
+export class RemoveTrainerWorkShift {
   constructor(
     private readonly authenticate: Authenticate,
     private readonly trainerScheduleRepository: TrainerScheduleRepository
@@ -34,7 +32,7 @@ export class EditTrainerWorkShift {
 
     const schedule = await this.trainerScheduleRepository.load(trainer.id);
 
-    const updatedSchedule = schedule.editShift(WorkShiftId.from(form.id), form.start, form.end);
+    const updatedSchedule = schedule.removeShift(WorkShiftId.from(form.id));
 
     await this.trainerScheduleRepository.save(updatedSchedule);
 

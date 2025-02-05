@@ -15,6 +15,7 @@ import {
   CreateTrainerSchedule,
   EditTrainerWorkShift,
   PrismaTrainerScheduleRepository,
+  RemoveTrainerWorkShift,
 } from "#mod/reservation";
 import { bearer } from "./middleware.js";
 
@@ -204,10 +205,37 @@ const trainerApp = new Hono<Context>()
       },
     };
 
-    console.log(command);
-
     try {
       const result = await editTrainerWorkShift.execute(command);
+      c.status(201);
+      return c.json(result);
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        c.status(403);
+        return c.json({ error: error.message });
+      } else {
+        c.status(500);
+        return c.json({ error: "Internal server error" });
+      }
+    }
+  })
+  .delete("/trainers/schedules/:id", bearer(), async (c) => {
+    const shiftId = c.req.param("id");
+    const authenticate = new Authenticate(c.var.supabase);
+    const trainerScheduleRepository = new PrismaTrainerScheduleRepository(c.var.prisma);
+    const removeTrainerWorkShift = new RemoveTrainerWorkShift(authenticate, trainerScheduleRepository);
+
+    const command = {
+      accessToken: c.var.accessToken,
+      timestamp: new Date(),
+      form: {
+        id: shiftId,
+      },
+    };
+
+    try {
+      const result = await removeTrainerWorkShift.execute(command);
       c.status(201);
       return c.json(result);
     } catch (error) {
