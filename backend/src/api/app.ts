@@ -13,11 +13,13 @@ import {
   RegisterUserAccount,
 } from "#mod/iam";
 import {
+  PrismaReservationRepository,
+  PrismaTrainerScheduleRepository,
   AddTrainerWorkShift,
   CreateTrainerSchedule,
   EditTrainerWorkShift,
-  PrismaTrainerScheduleRepository,
   RemoveTrainerWorkShift,
+  ReserveSession,
 } from "#mod/reservation";
 import { bearer } from "./middleware.js";
 
@@ -66,6 +68,38 @@ const userApp = new Hono<Context>()
 
     try {
       const result = await loginUserAccount.execute(command);
+      c.status(201);
+      return c.json(result);
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        c.status(403);
+        return c.json({ error: error.message });
+      } else {
+        c.status(500);
+        return c.json({ error: "Internal server error" });
+      }
+    }
+  })
+  .post("/reservations", bearer(), async (c) => {
+    const body = await c.req.json();
+    const supabase = c.get("supabase");
+    const authenticate = new Authenticate(supabase);
+    const trainerScheduleRepository = new PrismaTrainerScheduleRepository(c.get("prisma"));
+    const reservationRepository = new PrismaReservationRepository(c.get("prisma"));
+    const reserveSession = new ReserveSession(authenticate, trainerScheduleRepository, reservationRepository);
+
+    const command = {
+      accessToken: c.var.accessToken,
+      timestamp: new Date(),
+      form: {
+        trainerId: body.trainerId,
+        start: new Date(body.start),
+      },
+    };
+
+    try {
+      const result = await reserveSession.execute(command);
       c.status(201);
       return c.json(result);
     } catch (error) {

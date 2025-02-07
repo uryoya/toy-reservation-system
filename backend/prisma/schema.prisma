@@ -8,12 +8,11 @@ datasource db {
 }
 
 model TrainerSchedule {
-  trainerId String             @id @db.Uuid
-  timezone  String
-  shifts    TrainerWorkShift[]
-  createdAt DateTime           @default(now())
-
-  aggVersion Int @default(0) @map("__version")
+  trainerId  String             @id @db.Uuid
+  timezone   String
+  shifts     TrainerWorkShift[]
+  createdAt  DateTime           @default(now())
+  aggVersion Int                @default(0) @map("__version")
 }
 
 model TrainerWorkShift {
@@ -24,4 +23,23 @@ model TrainerWorkShift {
   createdAt DateTime @default(now())
 
   schedule TrainerSchedule @relation(fields: [trainerId], references: [trainerId], onDelete: Cascade)
+}
+
+model Reservation {
+  id         String               @id @db.Uuid
+  trainerId  String               @db.Uuid
+  traineeId  String               @db.Uuid
+  start      DateTime
+  end        DateTime
+  createdAt  DateTime             @default(now())
+  canceled   ReservationCanceled?
+  aggVersion Int                  @default(0) @map("__version")
+}
+
+model ReservationCanceled {
+  id        String   @id @db.Uuid
+  reason    String
+  createdAt DateTime @default(now())
+
+  reservation Reservation @relation(fields: [id], references: [id], onDelete: Cascade)
 }

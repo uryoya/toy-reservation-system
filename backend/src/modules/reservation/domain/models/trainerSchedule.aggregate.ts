@@ -1,6 +1,6 @@
 import { TZDate } from "@date-fns/tz";
 import type { Aggregate, Entity } from "#lib/domain-model";
-import { TrainerId, WorkShiftId, type TimeZone } from "./values.js";
+import { SessionPeriod, TrainerId, WorkShiftId, type TimeZone } from "./values.js";
 
 /**
  * トレーナーのスケジュール
@@ -101,6 +101,10 @@ export class WorkShift implements Entity<WorkShiftId> {
 
   overlaps(others: WorkShift[]): boolean {
     return others.some((other) => this.overlapsWith(other));
+  }
+
+  includes(sessionPeriod: SessionPeriod): boolean {
+    return this.start <= sessionPeriod.start && sessionPeriod.end <= this.end;
   }
 
   private clone(overwrite: Partial<CloneableWorkShiftProps>): WorkShift {
