@@ -114,6 +114,35 @@ const userApp = new Hono<Context>()
       }
     }
   })
+  .get("/reservations", bearer(), async (c) => {
+    const supabase = c.get("supabase");
+    const prisma = c.get("prisma");
+    const authenticate = new Authenticate(supabase);
+
+    try {
+      const { account: member } = await authenticate.execute({ accessToken: c.var.accessToken, role: "USER" });
+
+      const reservations = await prisma.reservation.findMany({
+        include: {
+          canceled: true,
+        },
+        where: {
+          traineeId: member.id,
+        },
+      });
+
+      return c.json(reservations);
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        c.status(403);
+        return c.json({ error: error.message });
+      } else {
+        c.status(500);
+        return c.json({ error: "Internal server error" });
+      }
+    }
+  })
   .post("/reservations/:id/cancel", bearer(), async (c) => {
     const body = await c.req.json();
     const supabase = c.get("supabase");
