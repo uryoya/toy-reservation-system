@@ -23,6 +23,7 @@ import {
   CancelReservationByMember,
 } from "#mod/reservation";
 import { bearer } from "./middleware.js";
+import { RegisterTrainerProfile } from "#mod/profile";
 
 type Context = {
   Variables: {
@@ -386,6 +387,61 @@ const trainerApp = new Hono<Context>()
       });
 
       return c.json(reservations);
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        c.status(403);
+        return c.json({ error: error.message });
+      } else {
+        c.status(500);
+        return c.json({ error: "Internal server error" });
+      }
+    }
+  })
+  .post("/profiles", bearer(), async (c) => {
+    const body = await c.req.json();
+    const authenticate = new Authenticate(c.var.supabase);
+    const registerTrainerProfile = new RegisterTrainerProfile(c.var.prisma, authenticate);
+
+    const command = {
+      accessToken: c.var.accessToken,
+      timestamp: new Date(),
+      form: {
+        name: body.name,
+        age: body.age,
+        description: body.description,
+        imageUrl: body.imageUrl,
+      },
+    };
+
+    try {
+      const result = await registerTrainerProfile.execute(command);
+      c.status(201);
+      return c.json(result);
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        c.status(403);
+        return c.json({ error: error.message });
+      } else {
+        c.status(500);
+        return c.json({ error: "Internal server error" });
+      }
+    }
+  })
+  .get("/profiles/me", bearer(), async (c) => {
+    const authenticate = new Authenticate(c.var.supabase);
+    const prisma = c.get("prisma");
+
+    try {
+      const { account: trainer } = await authenticate.execute({ accessToken: c.var.accessToken, role: "TRAINER" });
+      const profile = await prisma.trainerProfile.findUnique({
+        where: {
+          id: trainer.id,
+        },
+      });
+
+      return c.json(profile);
     } catch (error) {
       console.error(error);
       if (error instanceof Error) {

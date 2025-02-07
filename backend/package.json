@@ -13,7 +13,8 @@
     "#mod/iam": "./dist/modules/iam/index.js",
     "#mod/profile": "./dist/modules/profile/index.js",
     "#mod/reservation": "./dist/modules/reservation/index.js",
-    "#lib/domain-model": "./dist/lib/domain-model/index.js"
+    "#lib/domain-model": "./dist/lib/domain-model/index.js",
+    "#lib/application-service": "./dist/lib/application-service/index.js"
   },
   "dependencies": {
     "@date-fns/tz": "^1.2.0",

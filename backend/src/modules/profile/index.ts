@@ -1,1 +1,1 @@
-export const description = "Profile module for managing user profiles";
+export { RegisterTrainerProfile } from "./services/registerTrainerProfile.js";

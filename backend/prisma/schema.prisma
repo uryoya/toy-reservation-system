@@ -43,3 +43,12 @@ model ReservationCanceled {
 
   reservation Reservation @relation(fields: [id], references: [id], onDelete: Cascade)
 }
+
+model TrainerProfile {
+  id          String   @id @db.Uuid
+  name        String
+  age         Int
+  description String
+  imageUrl    String
+  createdAt   DateTime @default(now())
+}
