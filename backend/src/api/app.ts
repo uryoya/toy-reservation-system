@@ -370,6 +370,32 @@ const trainerApp = new Hono<Context>()
         return c.json({ error: "Internal server error" });
       }
     }
+  })
+  .get("/reservations", bearer(), async (c) => {
+    const supabase = c.get("supabase");
+    const prisma = c.get("prisma");
+    const authenticate = new Authenticate(supabase);
+
+    try {
+      await authenticate.execute({ accessToken: c.var.accessToken, role: "TRAINER" });
+
+      const reservations = await prisma.reservation.findMany({
+        include: {
+          canceled: true,
+        },
+      });
+
+      return c.json(reservations);
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        c.status(403);
+        return c.json({ error: error.message });
+      } else {
+        c.status(500);
+        return c.json({ error: "Internal server error" });
+      }
+    }
   });
 
 export const app = new Hono<Context>()
