@@ -19,9 +19,7 @@ export class Authenticate {
   constructor(private readonly supabase: SupabaseClient) {}
 
   async execute(command: Command): Promise<Result> {
-    const { data, error } = await this.supabase.auth.getUser(
-      command.accessToken
-    );
+    const { data, error } = await this.supabase.auth.getUser(command.accessToken);
     if (error) {
       throw new Error(error.message, { cause: error });
     }

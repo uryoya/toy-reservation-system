@@ -25,7 +25,7 @@ export class CancelReservationByMember {
 
   constructor(
     private readonly authenticate: Authenticate,
-    private readonly reservationRepository: ReservationRepository
+    private readonly reservationRepository: ReservationRepository,
   ) {
     this.cancellationService = new CancellationService();
   }
@@ -40,7 +40,7 @@ export class CancelReservationByMember {
     const confirmedReservation = this.cancellationService.checkCancelableByMember(
       MemberId.from(member.id),
       reservation,
-      timestamp
+      timestamp,
     );
     const canceledReservation = confirmedReservation.cancel(form.reason, timestamp);
     await this.reservationRepository.save(canceledReservation);

@@ -26,7 +26,7 @@ export class AddTrainerAccount {
   constructor(
     private readonly supabase: SupabaseClient,
     private readonly authenticate: Authenticate,
-    private readonly createTrainerSchedule: CreateTrainerSchedule
+    private readonly createTrainerSchedule: CreateTrainerSchedule,
   ) {}
 
   async execute({ accessToken, ...command }: Command): Promise<Result> {

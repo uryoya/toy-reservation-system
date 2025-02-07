@@ -20,7 +20,7 @@ export class PrismaTrainerScheduleRepository implements TrainerScheduleRepositor
     }
 
     const shifts = data.shifts.map(
-      (s) => new WorkShift(WorkShiftId.from(s.id), new TZDate(s.start), new TZDate(s.end), s.createdAt)
+      (s) => new WorkShift(WorkShiftId.from(s.id), new TZDate(s.start), new TZDate(s.end), s.createdAt),
     );
     const schedule = new TrainerSchedule(TrainerId.from(data.trainerId), shifts, data.createdAt, data.aggVersion);
 

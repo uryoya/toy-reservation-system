@@ -10,7 +10,12 @@ export class TrainerSchedule implements Aggregate<TrainerId> {
 
   public readonly timezone: TimeZone = "Asia/Tokyo";
 
-  constructor(readonly id: TrainerId, shifts: WorkShift[], readonly createdAt: Date, readonly __version: number) {
+  constructor(
+    readonly id: TrainerId,
+    shifts: WorkShift[],
+    readonly createdAt: Date,
+    readonly __version: number,
+  ) {
     this.#shifts = new Map(shifts.map((shift) => [shift.id, shift]));
   }
 
@@ -27,7 +32,7 @@ export class TrainerSchedule implements Aggregate<TrainerId> {
       WorkShiftId.from(crypto.randomUUID()),
       new TZDate(start, this.timezone),
       new TZDate(end, this.timezone),
-      timestamp
+      timestamp,
     );
 
     if (newShift.overlaps(this.shifts)) {
@@ -85,7 +90,12 @@ type CloneableTrainerScheduleProps = {
  * 勤務シフト
  */
 export class WorkShift implements Entity<WorkShiftId> {
-  constructor(readonly id: WorkShiftId, readonly start: TZDate, readonly end: TZDate, readonly createdAt: Date) {
+  constructor(
+    readonly id: WorkShiftId,
+    readonly start: TZDate,
+    readonly end: TZDate,
+    readonly createdAt: Date,
+  ) {
     if (start >= end) {
       throw new Error("開始日時は終了日時より前である必要があります");
     }

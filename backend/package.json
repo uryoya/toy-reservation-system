@@ -7,7 +7,8 @@
     "start": "node dist/main.js",
     "dev": "dotenvx run -- tsx watch src/main.ts",
     "build": "tsc",
-    "test": "vitest"
+    "test": "vitest",
+    "format": "prettier --write ."
   },
   "imports": {
     "#mod/iam": "./dist/modules/iam/index.js",
@@ -31,6 +32,7 @@
     "eslint": "^9.18.0",
     "eslint-import-resolver-typescript": "^3.7.0",
     "eslint-plugin-import": "^2.31.0",
+    "prettier": "3.4.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0",

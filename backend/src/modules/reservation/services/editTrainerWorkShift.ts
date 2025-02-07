@@ -23,7 +23,7 @@ export type Result = {
 export class EditTrainerWorkShift {
   constructor(
     private readonly authenticate: Authenticate,
-    private readonly trainerScheduleRepository: TrainerScheduleRepository
+    private readonly trainerScheduleRepository: TrainerScheduleRepository,
   ) {}
 
   async execute({ accessToken, form }: Command): Promise<Result> {

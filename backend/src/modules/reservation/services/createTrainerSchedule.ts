@@ -18,7 +18,7 @@ export type Result = {
 export class CreateTrainerSchedule {
   constructor(
     private readonly authenticate: Authenticate,
-    private readonly trainerScheduleRepository: TrainerScheduleRepository
+    private readonly trainerScheduleRepository: TrainerScheduleRepository,
   ) {}
 
   async execute({ accessToken, timestamp }: Command): Promise<Result> {

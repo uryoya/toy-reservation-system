@@ -27,7 +27,7 @@ export class PrismaReservationRepository implements ReservationRepository {
         data.canceled.reason,
         data.canceled.createdAt,
         data.createdAt,
-        data.aggVersion
+        data.aggVersion,
       );
     }
 
@@ -37,7 +37,7 @@ export class PrismaReservationRepository implements ReservationRepository {
       MemberId.from(data.traineeId),
       SessionPeriod.from(data.start, data.end),
       data.createdAt,
-      data.aggVersion
+      data.aggVersion,
     );
   }
 
@@ -56,8 +56,8 @@ export class PrismaReservationRepository implements ReservationRepository {
           MemberId.from(r.traineeId),
           SessionPeriod.from(r.start, r.end),
           r.createdAt,
-          r.aggVersion
-        )
+          r.aggVersion,
+        ),
     );
   }
 

@@ -7,7 +7,7 @@ import { Assigned } from "../models/reservation.aggregate.js";
 export class SessionScheduleService {
   constructor(
     readonly reservationRepository: ReservationRepository,
-    readonly trainerScheduleRepository: TrainerScheduleRepository
+    readonly trainerScheduleRepository: TrainerScheduleRepository,
   ) {}
 
   async schedule1HourSession(trainerId: string, start: Date, timestamp: Date): Promise<Assigned> {
@@ -17,7 +17,7 @@ export class SessionScheduleService {
 
     const trainerAssignable = trainerSchedule.shifts.some((shift) => shift.includes(sessionPeriod));
     const sessionAssignable = !confirmedReservations.some((reservation) =>
-      SessionPeriod.overlaps(reservation.sessionPeriod, sessionPeriod)
+      SessionPeriod.overlaps(reservation.sessionPeriod, sessionPeriod),
     );
 
     if (trainerAssignable && sessionAssignable) {
@@ -25,7 +25,7 @@ export class SessionScheduleService {
         ReservationId.from(crypto.randomUUID()),
         trainerSchedule.id,
         sessionPeriod,
-        timestamp
+        timestamp,
       );
       return reservation;
     }

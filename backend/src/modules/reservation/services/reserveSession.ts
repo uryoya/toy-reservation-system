@@ -27,7 +27,7 @@ export class ReserveSession {
   constructor(
     private readonly authenticate: Authenticate,
     private readonly trainerScheduleRepository: TrainerScheduleRepository,
-    private readonly reservationRepository: ReservationRepository
+    private readonly reservationRepository: ReservationRepository,
   ) {
     this.sessionScheduleService = new SessionScheduleService(reservationRepository, trainerScheduleRepository);
   }
@@ -41,7 +41,7 @@ export class ReserveSession {
     const assignedReservation = await this.sessionScheduleService.schedule1HourSession(
       form.trainerId,
       form.start,
-      timestamp
+      timestamp,
     );
     const confirmedReservation = assignedReservation.confirm(MemberId.from(member.id), timestamp);
 

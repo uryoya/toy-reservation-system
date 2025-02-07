@@ -21,7 +21,7 @@ export type Result = {
 export class RemoveTrainerWorkShift {
   constructor(
     private readonly authenticate: Authenticate,
-    private readonly trainerScheduleRepository: TrainerScheduleRepository
+    private readonly trainerScheduleRepository: TrainerScheduleRepository,
   ) {}
 
   async execute({ accessToken, form }: Command): Promise<Result> {

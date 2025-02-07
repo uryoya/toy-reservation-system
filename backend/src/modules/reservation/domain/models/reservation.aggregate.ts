@@ -11,7 +11,7 @@ export class Assigned implements Aggregate<ReservationId> {
     readonly trainerId: TrainerId,
     readonly sessionPeriod: SessionPeriod,
     readonly createdAt: Date,
-    readonly __version: number
+    readonly __version: number,
   ) {}
 
   static create(id: ReservationId, trainerId: TrainerId, sessionPeriod: SessionPeriod, timestamp: Date): Assigned {
@@ -35,7 +35,7 @@ export class Confirmed implements Aggregate<ReservationId> {
     readonly traineeId: MemberId,
     readonly sessionPeriod: SessionPeriod,
     readonly createdAt: Date,
-    readonly __version: number
+    readonly __version: number,
   ) {}
 
   cancel(reason: string, timestamp: Date): Canceled {
@@ -47,7 +47,7 @@ export class Confirmed implements Aggregate<ReservationId> {
       reason,
       this.createdAt,
       timestamp,
-      this.__version
+      this.__version,
     );
   }
 }
@@ -62,6 +62,6 @@ export class Canceled implements Aggregate<ReservationId> {
     readonly cancelReason: string,
     readonly createdAt: Date,
     readonly canceledAt: Date,
-    readonly __version: number
+    readonly __version: number,
   ) {}
 }

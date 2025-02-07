@@ -17,7 +17,10 @@ export type Result = {
  * トレーナーのプロフィールを登録する
  */
 export class RegisterTrainerProfile implements ApplicationService<RegisterTrainerProfileCommand, Result> {
-  constructor(private readonly prisma: PrismaClient, private readonly authenticate: Authenticate) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly authenticate: Authenticate,
+  ) {}
 
   async execute({ accessToken, form }: RegisterTrainerProfileCommand): Promise<Result> {
     const { account: trainer } = await this.authenticate.execute({ accessToken, role: "TRAINER" });

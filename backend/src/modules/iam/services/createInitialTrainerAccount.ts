@@ -23,7 +23,7 @@ export type Result = {
 export class CreateInitialTrainerAccount {
   constructor(
     private readonly supabase: SupabaseClient,
-    private readonly createTrainerSchedule: CreateTrainerSchedule
+    private readonly createTrainerSchedule: CreateTrainerSchedule,
   ) {}
 
   async execute(command: Command): Promise<Result> {
