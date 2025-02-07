@@ -8,7 +8,8 @@
     "dev": "dotenvx run -- tsx watch src/main.ts",
     "build": "tsc",
     "test": "vitest",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "lint": "eslint ."
   },
   "imports": {
     "#mod/iam": "./dist/modules/iam/index.js",
