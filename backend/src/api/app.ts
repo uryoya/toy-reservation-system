@@ -174,6 +174,28 @@ const userApp = new Hono<Context>()
         return c.json({ error: "Internal server error" });
       }
     }
+  })
+  .get("/trainers", bearer(), async (c) => {
+    const supabase = c.get("supabase");
+    const prisma = c.get("prisma");
+    const authenticate = new Authenticate(supabase);
+
+    try {
+      await authenticate.execute({ accessToken: c.var.accessToken, role: "USER" });
+
+      const trainers = await prisma.trainerProfile.findMany();
+
+      return c.json(trainers);
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        c.status(403);
+        return c.json({ error: error.message });
+      } else {
+        c.status(500);
+        return c.json({ error: "Internal server error" });
+      }
+    }
   });
 
 const trainerApp = new Hono<Context>()
