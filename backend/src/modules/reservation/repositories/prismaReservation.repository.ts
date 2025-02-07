@@ -1,10 +1,45 @@
 import type { PrismaClient } from "@prisma/client";
 import type { ReservationRepository } from "../domain/repositories/reservation.repository.js";
 import { MemberId, ReservationId, SessionPeriod, TrainerId } from "../domain/models/values.js";
-import { Confirmed, type Reservation } from "../domain/models/reservation.aggregate.js";
+import { Canceled, Confirmed, type Reservation } from "../domain/models/reservation.aggregate.js";
 
 export class PrismaReservationRepository implements ReservationRepository {
   constructor(private readonly prisma: PrismaClient) {}
+
+  async load(id: string) {
+    const data = await this.prisma.reservation.findUnique({
+      include: {
+        canceled: true,
+      },
+      where: { id },
+    });
+
+    if (!data) {
+      throw new Error("データが存在しません");
+    }
+
+    if (data.canceled) {
+      return new Canceled(
+        ReservationId.from(data.id),
+        TrainerId.from(data.trainerId),
+        MemberId.from(data.traineeId),
+        SessionPeriod.from(data.start, data.end),
+        data.canceled.reason,
+        data.canceled.createdAt,
+        data.createdAt,
+        data.aggVersion
+      );
+    }
+
+    return new Confirmed(
+      ReservationId.from(data.id),
+      TrainerId.from(data.trainerId),
+      MemberId.from(data.traineeId),
+      SessionPeriod.from(data.start, data.end),
+      data.createdAt,
+      data.aggVersion
+    );
+  }
 
   async loadAllConfirmed() {
     const data = await this.prisma.reservation.findMany({

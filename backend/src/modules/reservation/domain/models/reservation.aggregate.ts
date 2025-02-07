@@ -47,7 +47,7 @@ export class Confirmed implements Aggregate<ReservationId> {
       reason,
       this.createdAt,
       timestamp,
-      0
+      this.__version
     );
   }
 }

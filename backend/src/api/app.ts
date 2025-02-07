@@ -20,6 +20,7 @@ import {
   EditTrainerWorkShift,
   RemoveTrainerWorkShift,
   ReserveSession,
+  CancelReservationByMember,
 } from "#mod/reservation";
 import { bearer } from "./middleware.js";
 
@@ -100,6 +101,37 @@ const userApp = new Hono<Context>()
 
     try {
       const result = await reserveSession.execute(command);
+      c.status(201);
+      return c.json(result);
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        c.status(403);
+        return c.json({ error: error.message });
+      } else {
+        c.status(500);
+        return c.json({ error: "Internal server error" });
+      }
+    }
+  })
+  .post("/reservations/:id/cancel", bearer(), async (c) => {
+    const body = await c.req.json();
+    const supabase = c.get("supabase");
+    const authenticate = new Authenticate(supabase);
+    const reservationRepository = new PrismaReservationRepository(c.get("prisma"));
+    const cancelReservationByMember = new CancelReservationByMember(authenticate, reservationRepository);
+
+    const command = {
+      accessToken: c.var.accessToken,
+      timestamp: new Date(),
+      form: {
+        reservationId: c.req.param("id"),
+        reason: body.reason,
+      },
+    };
+
+    try {
+      const result = await cancelReservationByMember.execute(command);
       c.status(201);
       return c.json(result);
     } catch (error) {
