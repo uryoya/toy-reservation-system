@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Authenticate } from "#mod/iam";
 import type { CreateTrainerSchedule } from "#mod/reservation";
+import { SystemError, ValidationError } from "#lib/application-service";
 
 export type Command = {
   accessToken: string;
@@ -41,11 +42,11 @@ export class AddTrainerAccount {
       },
     });
     if (error) {
-      throw new Error(error.message, { cause: error });
+      throw new ValidationError(error.message, { cause: error });
     }
     const { user: trainer, session } = data;
     if (!trainer || !trainer.email || !session) {
-      throw new Error("トレーナー登録で想定外のエラーが発生しました");
+      throw new SystemError("トレーナー登録で想定外のエラーが発生しました");
     }
 
     // 新規作成したトレーナーのスケジュールを作成

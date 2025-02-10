@@ -1,3 +1,5 @@
+import { ValidationError } from "#lib/application-service";
+
 const brandTrainerId = Symbol();
 const brandMemberId = Symbol();
 const brandWorkShiftId = Symbol();
@@ -49,7 +51,7 @@ export const SessionPeriod = {
       return sessionPeriod;
     }
 
-    throw new Error("セッション開始時間は終了時間より前である必要があります");
+    throw new ValidationError("セッション開始時間は終了時間より前である必要があります");
   },
 
   overlaps: (a: SessionPeriod, b: SessionPeriod): boolean => {

@@ -24,6 +24,7 @@ import {
 } from "#mod/reservation";
 import { bearer } from "./middleware.js";
 import { RegisterTrainerProfile } from "#mod/profile";
+import { ConflictError, UnauthenticatedError, UnauthorizedError, ValidationError } from "#lib/application-service";
 
 type Context = {
   Variables: {
@@ -35,60 +36,36 @@ type Context = {
 const userApp = new Hono<Context>()
   .post("/users/register", async (c) => {
     const body = await c.req.json();
-    const supabase = c.get("supabase");
+    const { supabase } = c.var;
     const registerUserAccount = new RegisterUserAccount(supabase);
 
     const command = {
       email: body.email,
       password: body.password,
     };
+    const result = await registerUserAccount.execute(command);
 
-    try {
-      const result = await registerUserAccount.execute(command);
-      c.status(201);
-      return c.json(result);
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Error) {
-        c.status(403);
-        return c.json({ error: error.message });
-      } else {
-        c.status(500);
-        return c.json({ error: "Internal server error" });
-      }
-    }
+    return c.json(result, 201);
   })
   .post("/users/login", async (c) => {
     const body = await c.req.json();
-    const supabase = c.get("supabase");
+    const { supabase } = c.var;
     const loginUserAccount = new LoginUserAccount(supabase);
 
     const command = {
       email: body.email,
       password: body.password,
     };
+    const result = await loginUserAccount.execute(command);
 
-    try {
-      const result = await loginUserAccount.execute(command);
-      c.status(201);
-      return c.json(result);
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Error) {
-        c.status(403);
-        return c.json({ error: error.message });
-      } else {
-        c.status(500);
-        return c.json({ error: "Internal server error" });
-      }
-    }
+    return c.json(result, 200);
   })
   .post("/reservations", bearer(), async (c) => {
     const body = await c.req.json();
-    const supabase = c.get("supabase");
+    const { supabase, prisma } = c.var;
     const authenticate = new Authenticate(supabase);
-    const trainerScheduleRepository = new PrismaTrainerScheduleRepository(c.get("prisma"));
-    const reservationRepository = new PrismaReservationRepository(c.get("prisma"));
+    const trainerScheduleRepository = new PrismaTrainerScheduleRepository(prisma);
+    const reservationRepository = new PrismaReservationRepository(prisma);
     const reserveSession = new ReserveSession(authenticate, trainerScheduleRepository, reservationRepository);
 
     const command = {
@@ -99,56 +76,32 @@ const userApp = new Hono<Context>()
         start: new Date(body.start),
       },
     };
+    const result = await reserveSession.execute(command);
 
-    try {
-      const result = await reserveSession.execute(command);
-      c.status(201);
-      return c.json(result);
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Error) {
-        c.status(403);
-        return c.json({ error: error.message });
-      } else {
-        c.status(500);
-        return c.json({ error: "Internal server error" });
-      }
-    }
+    return c.json(result, 201);
   })
   .get("/reservations", bearer(), async (c) => {
-    const supabase = c.get("supabase");
-    const prisma = c.get("prisma");
+    const { supabase, prisma } = c.var;
     const authenticate = new Authenticate(supabase);
 
-    try {
-      const { account: member } = await authenticate.execute({ accessToken: c.var.accessToken, role: "USER" });
+    const { account: member } = await authenticate.execute({ accessToken: c.var.accessToken, role: "USER" });
 
-      const reservations = await prisma.reservation.findMany({
-        include: {
-          canceled: true,
-        },
-        where: {
-          traineeId: member.id,
-        },
-      });
+    const reservations = await prisma.reservation.findMany({
+      include: {
+        canceled: true,
+      },
+      where: {
+        traineeId: member.id,
+      },
+    });
 
-      return c.json(reservations);
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Error) {
-        c.status(403);
-        return c.json({ error: error.message });
-      } else {
-        c.status(500);
-        return c.json({ error: "Internal server error" });
-      }
-    }
+    return c.json(reservations);
   })
   .post("/reservations/:id/cancel", bearer(), async (c) => {
     const body = await c.req.json();
-    const supabase = c.get("supabase");
+    const { supabase, prisma } = c.var;
     const authenticate = new Authenticate(supabase);
-    const reservationRepository = new PrismaReservationRepository(c.get("prisma"));
+    const reservationRepository = new PrismaReservationRepository(prisma);
     const cancelReservationByMember = new CancelReservationByMember(authenticate, reservationRepository);
 
     const command = {
@@ -160,42 +113,18 @@ const userApp = new Hono<Context>()
       },
     };
 
-    try {
-      const result = await cancelReservationByMember.execute(command);
-      c.status(201);
-      return c.json(result);
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Error) {
-        c.status(403);
-        return c.json({ error: error.message });
-      } else {
-        c.status(500);
-        return c.json({ error: "Internal server error" });
-      }
-    }
+    const result = await cancelReservationByMember.execute(command);
+
+    return c.json(result, 200);
   })
   .get("/trainers", bearer(), async (c) => {
-    const supabase = c.get("supabase");
-    const prisma = c.get("prisma");
+    const { supabase, prisma, accessToken } = c.var;
     const authenticate = new Authenticate(supabase);
 
-    try {
-      await authenticate.execute({ accessToken: c.var.accessToken, role: "USER" });
+    await authenticate.execute({ accessToken, role: "USER" });
+    const trainers = await prisma.trainerProfile.findMany();
 
-      const trainers = await prisma.trainerProfile.findMany();
-
-      return c.json(trainers);
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Error) {
-        c.status(403);
-        return c.json({ error: error.message });
-      } else {
-        c.status(500);
-        return c.json({ error: "Internal server error" });
-      }
-    }
+    return c.json(trainers, 200);
   });
 
 const trainerApp = new Hono<Context>()
@@ -210,21 +139,9 @@ const trainerApp = new Hono<Context>()
       email: body.email,
       password: body.password,
     };
+    const result = await createInitialTrainerAccount.execute(command);
 
-    try {
-      const result = await createInitialTrainerAccount.execute(command);
-      c.status(201);
-      return c.json(result);
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Error) {
-        c.status(403);
-        return c.json({ error: error.message });
-      } else {
-        c.status(500);
-        return c.json({ error: "Internal server error" });
-      }
-    }
+    return c.json(result, 201);
   })
   .post("/trainers/add", bearer(), async (c) => {
     const body = await c.req.json();
@@ -238,21 +155,9 @@ const trainerApp = new Hono<Context>()
       email: body.email,
       password: body.password,
     };
+    const result = await addTrainerAccount.execute(command);
 
-    try {
-      const result = await addTrainerAccount.execute(command);
-      c.status(201);
-      return c.json(result);
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Error) {
-        c.status(403);
-        return c.json({ error: error.message });
-      } else {
-        c.status(500);
-        return c.json({ error: "Internal server error" });
-      }
-    }
+    return c.json(result, 201);
   })
   .post("/trainers/login", async (c) => {
     const body = await c.req.json();
@@ -262,21 +167,9 @@ const trainerApp = new Hono<Context>()
       email: body.email,
       password: body.password,
     };
+    const result = await loginTrainerAccount.execute(command);
 
-    try {
-      const result = await loginTrainerAccount.execute(command);
-      c.status(201);
-      return c.json(result);
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Error) {
-        c.status(403);
-        return c.json({ error: error.message });
-      } else {
-        c.status(500);
-        return c.json({ error: "Internal server error" });
-      }
-    }
+    return c.json(result, 200);
   })
   .get("/trainers/schedules", bearer(), async (c) => {
     const year = c.req.query("year") ?? new Date().getFullYear();
@@ -317,21 +210,9 @@ const trainerApp = new Hono<Context>()
         end: new Date(body.end),
       },
     };
+    const result = await addTrainerWorkShift.execute(command);
 
-    try {
-      const result = await addTrainerWorkShift.execute(command);
-      c.status(201);
-      return c.json(result);
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Error) {
-        c.status(403);
-        return c.json({ error: error.message });
-      } else {
-        c.status(500);
-        return c.json({ error: "Internal server error" });
-      }
-    }
+    return c.json(result, 201);
   })
   .post("/trainers/schedules/:id", bearer(), async (c) => {
     const shiftId = c.req.param("id");
@@ -349,21 +230,9 @@ const trainerApp = new Hono<Context>()
         end: body.end && new Date(body.end),
       },
     };
+    const result = await editTrainerWorkShift.execute(command);
 
-    try {
-      const result = await editTrainerWorkShift.execute(command);
-      c.status(201);
-      return c.json(result);
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Error) {
-        c.status(403);
-        return c.json({ error: error.message });
-      } else {
-        c.status(500);
-        return c.json({ error: "Internal server error" });
-      }
-    }
+    return c.json(result, 200);
   })
   .delete("/trainers/schedules/:id", bearer(), async (c) => {
     const shiftId = c.req.param("id");
@@ -378,47 +247,23 @@ const trainerApp = new Hono<Context>()
         id: shiftId,
       },
     };
+    const result = await removeTrainerWorkShift.execute(command);
 
-    try {
-      const result = await removeTrainerWorkShift.execute(command);
-      c.status(201);
-      return c.json(result);
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Error) {
-        c.status(403);
-        return c.json({ error: error.message });
-      } else {
-        c.status(500);
-        return c.json({ error: "Internal server error" });
-      }
-    }
+    return c.json(result, 200);
   })
   .get("/reservations", bearer(), async (c) => {
-    const supabase = c.get("supabase");
-    const prisma = c.get("prisma");
+    const { supabase, prisma, accessToken } = c.var;
     const authenticate = new Authenticate(supabase);
 
-    try {
-      await authenticate.execute({ accessToken: c.var.accessToken, role: "TRAINER" });
+    await authenticate.execute({ accessToken, role: "TRAINER" });
 
-      const reservations = await prisma.reservation.findMany({
-        include: {
-          canceled: true,
-        },
-      });
+    const reservations = await prisma.reservation.findMany({
+      include: {
+        canceled: true,
+      },
+    });
 
-      return c.json(reservations);
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Error) {
-        c.status(403);
-        return c.json({ error: error.message });
-      } else {
-        c.status(500);
-        return c.json({ error: "Internal server error" });
-      }
-    }
+    return c.json(reservations, 200);
   })
   .post("/profiles", bearer(), async (c) => {
     const body = await c.req.json();
@@ -435,45 +280,22 @@ const trainerApp = new Hono<Context>()
         imageUrl: body.imageUrl,
       },
     };
+    const result = await registerTrainerProfile.execute(command);
 
-    try {
-      const result = await registerTrainerProfile.execute(command);
-      c.status(201);
-      return c.json(result);
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Error) {
-        c.status(403);
-        return c.json({ error: error.message });
-      } else {
-        c.status(500);
-        return c.json({ error: "Internal server error" });
-      }
-    }
+    return c.json(result, 201);
   })
   .get("/profiles/me", bearer(), async (c) => {
     const authenticate = new Authenticate(c.var.supabase);
     const prisma = c.get("prisma");
 
-    try {
-      const { account: trainer } = await authenticate.execute({ accessToken: c.var.accessToken, role: "TRAINER" });
-      const profile = await prisma.trainerProfile.findUnique({
-        where: {
-          id: trainer.id,
-        },
-      });
+    const { account: trainer } = await authenticate.execute({ accessToken: c.var.accessToken, role: "TRAINER" });
+    const profile = await prisma.trainerProfile.findUnique({
+      where: {
+        id: trainer.id,
+      },
+    });
 
-      return c.json(profile);
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Error) {
-        c.status(403);
-        return c.json({ error: error.message });
-      } else {
-        c.status(500);
-        return c.json({ error: "Internal server error" });
-      }
-    }
+    return c.json(profile, 200);
   });
 
 export const app = new Hono<Context>()
@@ -489,4 +311,22 @@ export const app = new Hono<Context>()
   })
   .basePath("/api")
   .route("/user-app", userApp)
-  .route("/trainer-app", trainerApp);
+  .route("/trainer-app", trainerApp)
+  .onError(async (error, c) => {
+    if (error instanceof UnauthenticatedError) {
+      return c.json({ error: error.message }, 401);
+    }
+    if (error instanceof UnauthorizedError) {
+      return c.json({ error: error.message }, 403);
+    }
+    if (error instanceof ValidationError) {
+      console.warn(error);
+      return c.json({ error: error.message }, 400);
+    }
+    if (error instanceof ConflictError) {
+      console.warn(error);
+      return c.json({ error: error.message }, 409);
+    }
+    console.error(error);
+    return c.json({ error: "Internal server error" }, 500);
+  });

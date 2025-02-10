@@ -15,14 +15,12 @@ export const bearer = () =>
   createMiddleware<BearerMiddlewareContext>(async (c, next) => {
     const authorization = c.req.header("Authorization");
     if (!authorization) {
-      c.status(401);
-      return c.json({ error: "Unauthorized" });
+      return c.json({ error: "Unauthorized" }, 401);
     }
 
     const [type, token] = authorization.split(" ");
     if (type !== "Bearer") {
-      c.status(401);
-      return c.json({ error: "Unauthorized" });
+      return c.json({ error: "Unauthorized" }, 401);
     }
 
     c.set("accessToken", token);

@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { ConflictError } from "#lib/application-service";
 import type { ReservationRepository } from "../domain/repositories/reservation.repository.js";
 import { MemberId, ReservationId, SessionPeriod, TrainerId } from "../domain/models/values.js";
 import { Canceled, Confirmed, type Reservation } from "../domain/models/reservation.aggregate.js";
@@ -69,7 +70,7 @@ export class PrismaReservationRepository implements ReservationRepository {
 
       if (exists) {
         if (exists.aggVersion !== reservation.__version) {
-          throw new Error("競合が発生しました");
+          throw new ConflictError("競合が発生しました");
         }
         await tx.reservation.delete({ where: { id: reservation.id } });
       }

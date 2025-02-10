@@ -1,3 +1,4 @@
+import { ValidationError } from "#lib/application-service";
 import type { Aggregate } from "#lib/domain-model";
 import type { MemberId, ReservationId, SessionPeriod, TrainerId } from "./values.js";
 
@@ -16,7 +17,7 @@ export class Assigned implements Aggregate<ReservationId> {
 
   static create(id: ReservationId, trainerId: TrainerId, sessionPeriod: SessionPeriod, timestamp: Date): Assigned {
     if (sessionPeriod.start < timestamp) {
-      throw new Error("セッション開始時間は現在時刻より後である必要があります");
+      throw new ValidationError("セッション開始時間は現在時刻より後である必要があります");
     }
 
     return new Assigned(id, trainerId, sessionPeriod, timestamp, 0);

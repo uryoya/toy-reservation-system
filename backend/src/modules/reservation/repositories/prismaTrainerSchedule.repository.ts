@@ -1,8 +1,9 @@
 import type { PrismaClient } from "@prisma/client";
+import { TZDate } from "@date-fns/tz";
+import { ConflictError } from "#lib/application-service";
 import type { TrainerScheduleRepository } from "../domain/repositories/trainerSchedule.repository.js";
 import { TrainerId, WorkShiftId } from "../domain/models/values.js";
 import { TrainerSchedule, WorkShift } from "../domain/models/trainerSchedule.aggregate.js";
-import { TZDate } from "@date-fns/tz";
 
 export class PrismaTrainerScheduleRepository implements TrainerScheduleRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -35,7 +36,7 @@ export class PrismaTrainerScheduleRepository implements TrainerScheduleRepositor
 
       if (exists) {
         if (exists.aggVersion !== schedule.__version) {
-          throw new Error("競合が発生しました");
+          throw new ConflictError("競合が発生しました");
         }
         await tx.trainerSchedule.delete({ where: { trainerId: schedule.id } });
       }

@@ -1,3 +1,4 @@
+import { SystemError, UnauthenticatedError, UnauthorizedError } from "#lib/application-service";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type Command = {
@@ -21,14 +22,14 @@ export class Authenticate {
   async execute(command: Command): Promise<Result> {
     const { data, error } = await this.supabase.auth.getUser(command.accessToken);
     if (error) {
-      throw new Error(error.message, { cause: error });
+      throw new UnauthenticatedError(error.message, { cause: error });
     }
     const { user } = data;
     if (!user.email || !user.user_metadata?.role) {
-      throw new Error("認証で想定外のエラーが発生しました");
+      throw new SystemError("認証で想定外のエラーが発生しました");
     }
     if (user.user_metadata.role !== command.role) {
-      throw new Error("アクセスできません");
+      throw new UnauthorizedError("アクセスできません");
     }
 
     const result: Result = {

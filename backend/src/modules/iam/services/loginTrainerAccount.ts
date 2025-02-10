@@ -1,3 +1,4 @@
+import { SystemError, UnauthenticatedError } from "#lib/application-service";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type Command = {
@@ -28,14 +29,14 @@ export class LoginTrainerAccount {
       password: command.password,
     });
     if (error) {
-      throw new Error(error.message, { cause: error });
+      throw new UnauthenticatedError(error.message, { cause: error });
     }
     const { user, session } = data;
     if (!user.email || !user.user_metadata?.role) {
-      throw new Error("認証で想定外のエラーが発生しました");
+      throw new SystemError("認証で想定外のエラーが発生しました");
     }
     if (user.user_metadata.role !== "TRAINER") {
-      throw new Error("ログインできません");
+      throw new UnauthenticatedError("ログインできません");
     }
 
     const result: Result = {

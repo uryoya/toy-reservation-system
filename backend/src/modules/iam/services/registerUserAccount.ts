@@ -1,3 +1,4 @@
+import { SystemError, ValidationError } from "#lib/application-service";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type Command = {
@@ -33,11 +34,11 @@ export class RegisterUserAccount {
       },
     });
     if (error) {
-      throw new Error(error.message, { cause: error });
+      throw new ValidationError(error.message, { cause: error });
     }
     const { user, session } = data;
     if (!user || !user.email || !session) {
-      throw new Error("ユーザー登録で想定外のエラーが発生しました");
+      throw new SystemError("ユーザー登録で想定外のエラーが発生しました");
     }
 
     const result: Result = {

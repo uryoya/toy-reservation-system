@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CreateTrainerSchedule } from "#mod/reservation";
+import { SystemError, ValidationError } from "#lib/application-service";
 
 export type Command = {
   email: string;
@@ -39,11 +40,11 @@ export class CreateInitialTrainerAccount {
       },
     });
     if (error) {
-      throw new Error(error.message, { cause: error });
+      throw new ValidationError(error.message, { cause: error });
     }
     const { user: trainer, session } = data;
     if (!trainer || !trainer.email || !session) {
-      throw new Error("トレーナー登録で想定外のエラーが発生しました");
+      throw new SystemError("トレーナー登録で想定外のエラーが発生しました");
     }
 
     await this.createTrainerSchedule.execute({
@@ -68,10 +69,10 @@ export class CreateInitialTrainerAccount {
   private async checkSystemInitialized() {
     const { data: listUserData, error: listUserError } = await this.supabase.auth.admin.listUsers({ perPage: 1 });
     if (listUserError) {
-      throw new Error(listUserError.message, { cause: listUserError });
+      throw new SystemError(listUserError.message, { cause: listUserError });
     }
     if (listUserData.total > 0) {
-      throw new Error("システムは初期化済みのためトレーナーアカウントを作成できません");
+      throw new ValidationError("システムは初期化済みのためトレーナーアカウントを作成できません");
     }
   }
 }

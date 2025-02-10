@@ -1,5 +1,6 @@
 import { TZDate } from "@date-fns/tz";
 import type { Aggregate, Entity } from "#lib/domain-model";
+import { ValidationError } from "#lib/application-service";
 import { SessionPeriod, TrainerId, WorkShiftId, type TimeZone } from "./values.js";
 
 /**
@@ -36,7 +37,7 @@ export class TrainerSchedule implements Aggregate<TrainerId> {
     );
 
     if (newShift.overlaps(this.shifts)) {
-      throw new Error("既存のシフトと重複するシフトを追加することはできません");
+      throw new ValidationError("既存のシフトと重複するシフトを追加することはできません");
     }
 
     const updatedShifts = new Map(this.#shifts);
@@ -48,7 +49,7 @@ export class TrainerSchedule implements Aggregate<TrainerId> {
   editShift(shiftId: WorkShiftId, start?: Date, end?: Date): TrainerSchedule {
     const shift = this.#shifts.get(shiftId);
     if (!shift) {
-      throw new Error("指定されたシフトが存在しません");
+      throw new ValidationError("指定されたシフトが存在しません");
     }
 
     const editedShift = shift.edit(start && new TZDate(start, this.timezone), end && new TZDate(end, this.timezone));
@@ -57,7 +58,7 @@ export class TrainerSchedule implements Aggregate<TrainerId> {
       .filter((s) => s.id !== editedShift.id)
       .toArray();
     if (editedShift.overlaps(otherShifts)) {
-      throw new Error("既存のシフトと重複するシフトを追加することはできません");
+      throw new ValidationError("既存のシフトと重複するシフトを追加することはできません");
     }
 
     const updatedShifts = new Map(this.#shifts);
@@ -68,7 +69,7 @@ export class TrainerSchedule implements Aggregate<TrainerId> {
 
   removeShift(shiftId: WorkShiftId): TrainerSchedule {
     if (!this.#shifts.has(shiftId)) {
-      throw new Error("指定されたシフトが存在しません");
+      throw new ValidationError("指定されたシフトが存在しません");
     }
 
     const updatedShifts = new Map(this.#shifts);
@@ -97,7 +98,7 @@ export class WorkShift implements Entity<WorkShiftId> {
     readonly createdAt: Date,
   ) {
     if (start >= end) {
-      throw new Error("開始日時は終了日時より前である必要があります");
+      throw new ValidationError("開始日時は終了日時より前である必要があります");
     }
   }
 

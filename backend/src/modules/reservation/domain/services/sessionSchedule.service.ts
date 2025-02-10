@@ -1,4 +1,5 @@
 import { add } from "date-fns";
+import { ValidationError } from "#lib/application-service";
 import { ReservationId, SessionPeriod } from "../models/values.js";
 import type { ReservationRepository } from "../repositories/reservation.repository.js";
 import type { TrainerScheduleRepository } from "../repositories/trainerSchedule.repository.js";
@@ -29,6 +30,6 @@ export class SessionScheduleService {
       );
       return reservation;
     }
-    throw new Error("指定されたトレーナーはこの時間の予約を受け付けることはできません");
+    throw new ValidationError("指定されたトレーナーはこの時間の予約を受け付けることはできません");
   }
 }

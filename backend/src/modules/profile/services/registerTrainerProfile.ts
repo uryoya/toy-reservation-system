@@ -1,8 +1,8 @@
 import type { PrismaClient, TrainerProfile } from "@prisma/client";
 import type { Authenticate } from "#mod/iam";
-import type { ApplicationService, Command } from "#lib/application-service";
+import type { ApplicationService, CommandWithAuth } from "#lib/application-service";
 
-export type RegisterTrainerProfileCommand = Command<{
+export type Command = CommandWithAuth<{
   name: string;
   age: number;
   description: string;
@@ -16,13 +16,13 @@ export type Result = {
 /**
  * トレーナーのプロフィールを登録する
  */
-export class RegisterTrainerProfile implements ApplicationService<RegisterTrainerProfileCommand, Result> {
+export class RegisterTrainerProfile implements ApplicationService<Command, Result> {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly authenticate: Authenticate,
   ) {}
 
-  async execute({ accessToken, form }: RegisterTrainerProfileCommand): Promise<Result> {
+  async execute({ accessToken, form }: Command): Promise<Result> {
     const { account: trainer } = await this.authenticate.execute({ accessToken, role: "TRAINER" });
 
     const profile = await this.prisma.trainerProfile.create({
