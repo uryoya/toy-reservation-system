@@ -1,6 +1,7 @@
+import { ValidationError } from "#lib/application-service";
 import type { Authenticate } from "#mod/iam";
 import { TrainerSchedule } from "../domain/models/trainerSchedule.aggregate.js";
-import { WorkShiftId } from "../domain/models/values.js";
+import { TrainerId, WorkShiftId } from "../domain/models/values.js";
 import type { TrainerScheduleRepository } from "../domain/repositories/trainerSchedule.repository.js";
 
 export type Command = {
@@ -30,7 +31,7 @@ export class RemoveTrainerWorkShift {
       role: "TRAINER",
     });
 
-    const schedule = await this.trainerScheduleRepository.load(trainer.id);
+    const schedule = await this.loadTrainerScheduleById(TrainerId.from(trainer.id));
 
     const updatedSchedule = schedule.removeShift(WorkShiftId.from(form.id));
 
@@ -39,5 +40,13 @@ export class RemoveTrainerWorkShift {
     return {
       schedule: updatedSchedule,
     };
+  }
+
+  private async loadTrainerScheduleById(id: TrainerId) {
+    const schedule = await this.trainerScheduleRepository.findById(id);
+    if (!schedule) {
+      throw new ValidationError("トレーナーのスケジュールが見つかりません");
+    }
+    return schedule;
   }
 }

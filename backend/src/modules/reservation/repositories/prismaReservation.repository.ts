@@ -7,7 +7,7 @@ import { Canceled, Confirmed, type Reservation } from "../domain/models/reservat
 export class PrismaReservationRepository implements ReservationRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async load(id: string) {
+  async findById(id: ReservationId) {
     const data = await this.prisma.reservation.findUnique({
       include: {
         canceled: true,
@@ -16,7 +16,7 @@ export class PrismaReservationRepository implements ReservationRepository {
     });
 
     if (!data) {
-      throw new Error("データが存在しません");
+      return undefined;
     }
 
     if (data.canceled) {
@@ -42,7 +42,7 @@ export class PrismaReservationRepository implements ReservationRepository {
     );
   }
 
-  async loadAllConfirmed() {
+  async findAllConfirmed() {
     const data = await this.prisma.reservation.findMany({
       where: {
         canceled: null,

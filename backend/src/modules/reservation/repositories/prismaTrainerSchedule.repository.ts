@@ -8,7 +8,7 @@ import { TrainerSchedule, WorkShift } from "../domain/models/trainerSchedule.agg
 export class PrismaTrainerScheduleRepository implements TrainerScheduleRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async load(id: string) {
+  async findById(id: TrainerId) {
     const data = await this.prisma.trainerSchedule.findUnique({
       include: {
         shifts: true,
@@ -17,7 +17,7 @@ export class PrismaTrainerScheduleRepository implements TrainerScheduleRepositor
     });
 
     if (!data) {
-      throw new Error("データが存在しません");
+      return undefined;
     }
 
     const shifts = data.shifts.map(

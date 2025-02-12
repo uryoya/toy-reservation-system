@@ -1,17 +1,14 @@
 import type { Authenticate } from "#mod/iam";
+import { ValidationError, type ApplicationService, type CommandWithAuth } from "#lib/application-service";
 import type { ReservationRepository } from "../domain/repositories/reservation.repository.js";
-import { MemberId } from "../domain/models/values.js";
+import { MemberId, ReservationId } from "../domain/models/values.js";
 import { Canceled } from "../domain/models/reservation.aggregate.js";
 import { CancellationService } from "../domain/services/cancellation.service.js";
 
-export type Command = {
-  accessToken: string;
-  timestamp: Date;
-  form: {
-    reservationId: string;
-    reason: string;
-  };
-};
+export type Command = CommandWithAuth<{
+  reservationId: string;
+  reason: string;
+}>;
 
 export type Result = {
   reservation: Canceled;
@@ -20,15 +17,13 @@ export type Result = {
 /**
  * 会員が予約をキャンセルする
  */
-export class CancelReservationByMember {
+export class CancelReservationByMember implements ApplicationService<Command, Result> {
   private readonly cancellationService = new CancellationService();
 
   constructor(
     private readonly authenticate: Authenticate,
     private readonly reservationRepository: ReservationRepository,
-  ) {
-    this.cancellationService = new CancellationService();
-  }
+  ) {}
 
   async execute({ accessToken, form, timestamp }: Command): Promise<Result> {
     const { account: member } = await this.authenticate.execute({
@@ -36,7 +31,7 @@ export class CancelReservationByMember {
       role: "USER",
     });
 
-    const reservation = await this.reservationRepository.load(form.reservationId);
+    const reservation = await this.loadReservationById(ReservationId.from(form.reservationId));
     const confirmedReservation = this.cancellationService.checkCancelableByMember(
       MemberId.from(member.id),
       reservation,
@@ -45,8 +40,14 @@ export class CancelReservationByMember {
     const canceledReservation = confirmedReservation.cancel(form.reason, timestamp);
     await this.reservationRepository.save(canceledReservation);
 
-    return {
-      reservation: canceledReservation,
-    };
+    return { reservation: canceledReservation };
+  }
+
+  private async loadReservationById(id: ReservationId) {
+    const reservation = await this.reservationRepository.findById(id);
+    if (!reservation) {
+      throw new ValidationError("予約が見つかりません");
+    }
+    return reservation;
   }
 }
