@@ -5,25 +5,22 @@ import { PrismaClient } from "@prisma/client";
 import { TZDate } from "@date-fns/tz";
 import { endOfMonth, startOfMonth } from "date-fns";
 import {
-  AddTrainerAccount,
-  Authenticate,
-  CreateInitialTrainerAccount,
-  LoginTrainerAccount,
-  LoginUserAccount,
-  RegisterUserAccount,
+  useAddTrainerAccount,
+  useAuthenticate,
+  useCreateInitialTrainerAccount,
+  useLoginTrainerAccount,
+  useLoginUserAccount,
+  useRegisterUserAccount,
 } from "#mod/iam";
 import {
-  PrismaReservationRepository,
-  PrismaTrainerScheduleRepository,
-  AddTrainerWorkShift,
-  CreateTrainerSchedule,
-  EditTrainerWorkShift,
-  RemoveTrainerWorkShift,
-  ReserveSession,
-  CancelReservationByMember,
+  useAddTrainerWorkShift,
+  useCancelReservationByMember,
+  useEditTrainerWorkShift,
+  useRemoveTrainerWorkShift,
+  useReserveSession,
 } from "#mod/reservation";
 import { bearer } from "./middleware.js";
-import { RegisterTrainerProfile } from "#mod/profile";
+import { useRegisterTrainerProfile } from "#mod/profile";
 import { ConflictError, UnauthenticatedError, UnauthorizedError, ValidationError } from "#lib/application-service";
 
 type Context = {
@@ -36,8 +33,7 @@ type Context = {
 const userApp = new Hono<Context>()
   .post("/users/register", async (c) => {
     const body = await c.req.json();
-    const { supabase } = c.var;
-    const registerUserAccount = new RegisterUserAccount(supabase);
+    const registerUserAccount = useRegisterUserAccount(c.var.supabase);
 
     const command = {
       email: body.email,
@@ -49,8 +45,7 @@ const userApp = new Hono<Context>()
   })
   .post("/users/login", async (c) => {
     const body = await c.req.json();
-    const { supabase } = c.var;
-    const loginUserAccount = new LoginUserAccount(supabase);
+    const loginUserAccount = useLoginUserAccount(c.var.supabase);
 
     const command = {
       email: body.email,
@@ -62,11 +57,7 @@ const userApp = new Hono<Context>()
   })
   .post("/reservations", bearer(), async (c) => {
     const body = await c.req.json();
-    const { supabase, prisma } = c.var;
-    const authenticate = new Authenticate(supabase);
-    const trainerScheduleRepository = new PrismaTrainerScheduleRepository(prisma);
-    const reservationRepository = new PrismaReservationRepository(prisma);
-    const reserveSession = new ReserveSession(authenticate, trainerScheduleRepository, reservationRepository);
+    const reserveSession = useReserveSession(c.var.supabase, c.var.prisma);
 
     const command = {
       accessToken: c.var.accessToken,
@@ -82,7 +73,7 @@ const userApp = new Hono<Context>()
   })
   .get("/reservations", bearer(), async (c) => {
     const { supabase, prisma } = c.var;
-    const authenticate = new Authenticate(supabase);
+    const authenticate = useAuthenticate(supabase);
 
     const { account: member } = await authenticate.execute({ accessToken: c.var.accessToken, role: "USER" });
 
@@ -99,10 +90,7 @@ const userApp = new Hono<Context>()
   })
   .post("/reservations/:id/cancel", bearer(), async (c) => {
     const body = await c.req.json();
-    const { supabase, prisma } = c.var;
-    const authenticate = new Authenticate(supabase);
-    const reservationRepository = new PrismaReservationRepository(prisma);
-    const cancelReservationByMember = new CancelReservationByMember(authenticate, reservationRepository);
+    const cancelReservationByMember = useCancelReservationByMember(c.var.supabase, c.var.prisma);
 
     const command = {
       accessToken: c.var.accessToken,
@@ -119,7 +107,7 @@ const userApp = new Hono<Context>()
   })
   .get("/trainers", bearer(), async (c) => {
     const { supabase, prisma, accessToken } = c.var;
-    const authenticate = new Authenticate(supabase);
+    const authenticate = useAuthenticate(supabase);
 
     await authenticate.execute({ accessToken, role: "USER" });
     const trainers = await prisma.trainerProfile.findMany();
@@ -130,10 +118,7 @@ const userApp = new Hono<Context>()
 const trainerApp = new Hono<Context>()
   .post("/trainers/init", async (c) => {
     const body = await c.req.json();
-    const authenticate = new Authenticate(c.var.supabase);
-    const trainerScheduleRepository = new PrismaTrainerScheduleRepository(c.var.prisma);
-    const createTrainerSchedule = new CreateTrainerSchedule(authenticate, trainerScheduleRepository);
-    const createInitialTrainerAccount = new CreateInitialTrainerAccount(c.var.supabase, createTrainerSchedule);
+    const createInitialTrainerAccount = useCreateInitialTrainerAccount(c.var.supabase, c.var.prisma);
 
     const command = {
       email: body.email,
@@ -145,10 +130,7 @@ const trainerApp = new Hono<Context>()
   })
   .post("/trainers/add", bearer(), async (c) => {
     const body = await c.req.json();
-    const authenticate = new Authenticate(c.var.supabase);
-    const trainerScheduleRepository = new PrismaTrainerScheduleRepository(c.var.prisma);
-    const createTrainerSchedule = new CreateTrainerSchedule(authenticate, trainerScheduleRepository);
-    const addTrainerAccount = new AddTrainerAccount(c.var.supabase, authenticate, createTrainerSchedule);
+    const addTrainerAccount = useAddTrainerAccount(c.var.supabase, c.var.prisma);
 
     const command = {
       accessToken: c.var.accessToken,
@@ -161,7 +143,7 @@ const trainerApp = new Hono<Context>()
   })
   .post("/trainers/login", async (c) => {
     const body = await c.req.json();
-    const loginTrainerAccount = new LoginTrainerAccount(c.var.supabase);
+    const loginTrainerAccount = useLoginTrainerAccount(c.var.supabase);
 
     const command = {
       email: body.email,
@@ -174,7 +156,7 @@ const trainerApp = new Hono<Context>()
   .get("/trainers/schedules", bearer(), async (c) => {
     const year = c.req.query("year") ?? new Date().getFullYear();
     const month = c.req.query("month") ?? new Date().getMonth() + 1;
-    const authenticate = new Authenticate(c.var.supabase);
+    const authenticate = useAuthenticate(c.var.supabase);
 
     const { account: trainer } = await authenticate.execute({ accessToken: c.var.accessToken, role: "TRAINER" });
 
@@ -198,9 +180,7 @@ const trainerApp = new Hono<Context>()
   })
   .post("/trainers/schedules", bearer(), async (c) => {
     const body = await c.req.json();
-    const authenticate = new Authenticate(c.var.supabase);
-    const trainerScheduleRepository = new PrismaTrainerScheduleRepository(c.var.prisma);
-    const addTrainerWorkShift = new AddTrainerWorkShift(authenticate, trainerScheduleRepository);
+    const addTrainerWorkShift = useAddTrainerWorkShift(c.var.supabase, c.var.prisma);
 
     const command = {
       accessToken: c.var.accessToken,
@@ -217,9 +197,7 @@ const trainerApp = new Hono<Context>()
   .post("/trainers/schedules/:id", bearer(), async (c) => {
     const shiftId = c.req.param("id");
     const body = await c.req.json();
-    const authenticate = new Authenticate(c.var.supabase);
-    const trainerScheduleRepository = new PrismaTrainerScheduleRepository(c.var.prisma);
-    const editTrainerWorkShift = new EditTrainerWorkShift(authenticate, trainerScheduleRepository);
+    const editTrainerWorkShift = useEditTrainerWorkShift(c.var.supabase, c.var.prisma);
 
     const command = {
       accessToken: c.var.accessToken,
@@ -236,9 +214,7 @@ const trainerApp = new Hono<Context>()
   })
   .delete("/trainers/schedules/:id", bearer(), async (c) => {
     const shiftId = c.req.param("id");
-    const authenticate = new Authenticate(c.var.supabase);
-    const trainerScheduleRepository = new PrismaTrainerScheduleRepository(c.var.prisma);
-    const removeTrainerWorkShift = new RemoveTrainerWorkShift(authenticate, trainerScheduleRepository);
+    const removeTrainerWorkShift = useRemoveTrainerWorkShift(c.var.supabase, c.var.prisma);
 
     const command = {
       accessToken: c.var.accessToken,
@@ -253,7 +229,7 @@ const trainerApp = new Hono<Context>()
   })
   .get("/reservations", bearer(), async (c) => {
     const { supabase, prisma, accessToken } = c.var;
-    const authenticate = new Authenticate(supabase);
+    const authenticate = useAuthenticate(supabase);
 
     await authenticate.execute({ accessToken, role: "TRAINER" });
 
@@ -267,8 +243,7 @@ const trainerApp = new Hono<Context>()
   })
   .post("/profiles", bearer(), async (c) => {
     const body = await c.req.json();
-    const authenticate = new Authenticate(c.var.supabase);
-    const registerTrainerProfile = new RegisterTrainerProfile(c.var.prisma, authenticate);
+    const registerTrainerProfile = useRegisterTrainerProfile(c.var.supabase, c.var.prisma);
 
     const command = {
       accessToken: c.var.accessToken,
@@ -285,7 +260,7 @@ const trainerApp = new Hono<Context>()
     return c.json(result, 201);
   })
   .get("/profiles/me", bearer(), async (c) => {
-    const authenticate = new Authenticate(c.var.supabase);
+    const authenticate = useAuthenticate(c.var.supabase);
     const prisma = c.get("prisma");
 
     const { account: trainer } = await authenticate.execute({ accessToken: c.var.accessToken, role: "TRAINER" });
