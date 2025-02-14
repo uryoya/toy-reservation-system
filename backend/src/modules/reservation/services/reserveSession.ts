@@ -35,7 +35,7 @@ export class ReserveSession {
   async execute({ accessToken, form, timestamp }: Command): Promise<Result> {
     const { account: member } = await this.authenticate.execute({
       accessToken,
-      role: "USER",
+      role: "MEMBER",
     });
 
     const assignedReservation = await this.sessionScheduleService.schedule1HourSession(

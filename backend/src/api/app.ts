@@ -9,8 +9,8 @@ import {
   useAuthenticate,
   useCreateInitialTrainerAccount,
   useLoginTrainerAccount,
-  useLoginUserAccount,
-  useRegisterUserAccount,
+  useLoginMemberAccount,
+  useRegisterMemberAccount,
 } from "#mod/iam";
 import {
   useAddTrainerWorkShift,
@@ -30,28 +30,28 @@ type Context = {
   };
 };
 
-const userApp = new Hono<Context>()
-  .post("/users/register", async (c) => {
+const memberApp = new Hono<Context>()
+  .post("/members/register", async (c) => {
     const body = await c.req.json();
-    const registerUserAccount = useRegisterUserAccount(c.var.supabase);
+    const registerMemberAccount = useRegisterMemberAccount(c.var.supabase);
 
     const command = {
       email: body.email,
       password: body.password,
     };
-    const result = await registerUserAccount.execute(command);
+    const result = await registerMemberAccount.execute(command);
 
     return c.json(result, 201);
   })
-  .post("/users/login", async (c) => {
+  .post("/members/login", async (c) => {
     const body = await c.req.json();
-    const loginUserAccount = useLoginUserAccount(c.var.supabase);
+    const loginMemberAccount = useLoginMemberAccount(c.var.supabase);
 
     const command = {
       email: body.email,
       password: body.password,
     };
-    const result = await loginUserAccount.execute(command);
+    const result = await loginMemberAccount.execute(command);
 
     return c.json(result, 200);
   })
@@ -75,7 +75,7 @@ const userApp = new Hono<Context>()
     const { supabase, prisma } = c.var;
     const authenticate = useAuthenticate(supabase);
 
-    const { account: member } = await authenticate.execute({ accessToken: c.var.accessToken, role: "USER" });
+    const { account: member } = await authenticate.execute({ accessToken: c.var.accessToken, role: "MEMBER" });
 
     const reservations = await prisma.reservation.findMany({
       include: {
@@ -109,7 +109,7 @@ const userApp = new Hono<Context>()
     const { supabase, prisma, accessToken } = c.var;
     const authenticate = useAuthenticate(supabase);
 
-    await authenticate.execute({ accessToken, role: "USER" });
+    await authenticate.execute({ accessToken, role: "MEMBER" });
     const trainers = await prisma.trainerProfile.findMany();
 
     return c.json(trainers, 200);
@@ -285,7 +285,7 @@ export const app = new Hono<Context>()
     await next();
   })
   .basePath("/api")
-  .route("/user-app", userApp)
+  .route("/member-app", memberApp)
   .route("/trainer-app", trainerApp)
   .onError(async (error, c) => {
     if (error instanceof UnauthenticatedError) {

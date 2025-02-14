@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type Command = {
   accessToken: string;
-  role: "USER" | "TRAINER";
+  role: "MEMBER" | "TRAINER";
 };
 
 export type Result = {

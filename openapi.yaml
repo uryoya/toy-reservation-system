@@ -4,31 +4,31 @@ info:
   description: パーソナルジム向け予約管理SaaSのAPI定義
   version: 1.0.0
 paths:
-  /api/user-app/users/register:
+  /api/members-app/members/register:
     post:
-      summary: ユーザー登録
+      summary: 会員登録
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UserRegistration"
+              $ref: "#/components/schemas/MemberRegistration"
       responses:
         "200":
           description: 登録成功
-  /api/user-app/users/login:
+  /api/members-app/members/login:
     post:
-      summary: ユーザーログイン
+      summary: 会員ログイン
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UserLogin"
+              $ref: "#/components/schemas/MemberLogin"
       responses:
         "200":
           description: ログイン成功
-  /api/user-app/trainers:
+  /api/members-app/trainers:
     get:
       summary: トレーナー一覧取得
       responses:
@@ -40,7 +40,7 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Trainer"
-  /api/user-app/reservations:
+  /api/members-app/reservations:
     post:
       summary: 予約作成
       requestBody:
@@ -52,7 +52,7 @@ paths:
       responses:
         "200":
           description: 予約成功
-  /api/user-app/reservations/{id}:
+  /api/members-app/reservations/{id}:
     delete:
       summary: 予約キャンセル
       parameters:
@@ -64,7 +64,7 @@ paths:
       responses:
         "200":
           description: キャンセル成功
-  /api/user-app/reservations/history:
+  /api/members-app/reservations/history:
     get:
       summary: 予約履歴
       responses:
@@ -84,7 +84,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UserLogin"
+              $ref: "#/components/schemas/MemberLogin"
       responses:
         "200":
           description: ログイン成功
@@ -144,7 +144,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UserRegistration"
+              $ref: "#/components/schemas/MemberRegistration"
       responses:
         "200":
           description: 登録成功
@@ -155,7 +155,7 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
-    UserRegistration:
+    MemberRegistration:
       type: object
       properties:
         name:
@@ -168,7 +168,7 @@ components:
         - name
         - email
         - password
-    UserLogin:
+    MemberLogin:
       type: object
       properties:
         email:

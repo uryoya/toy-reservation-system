@@ -28,7 +28,7 @@ export class CancelReservationByMember implements ApplicationService<Command, Re
   async execute({ accessToken, form, timestamp }: Command): Promise<Result> {
     const { account: member } = await this.authenticate.execute({
       accessToken,
-      role: "USER",
+      role: "MEMBER",
     });
 
     const reservation = await this.loadReservationById(ReservationId.from(form.reservationId));

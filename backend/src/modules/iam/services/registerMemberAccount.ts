@@ -7,7 +7,7 @@ export type Command = {
 };
 
 export type Result = {
-  user: {
+  member: {
     id: string;
     email: string;
   };
@@ -18,9 +18,9 @@ export type Result = {
 };
 
 /**
- * ユーザー登録
+ * 会員登録
  */
-export class RegisterUserAccount {
+export class RegisterMemberAccount {
   constructor(private readonly supabase: SupabaseClient) {}
 
   async execute(command: Command): Promise<Result> {
@@ -29,22 +29,22 @@ export class RegisterUserAccount {
       password: command.password,
       options: {
         data: {
-          role: "USER",
+          role: "MEMBER",
         },
       },
     });
     if (error) {
       throw new ValidationError(error.message, { cause: error });
     }
-    const { user, session } = data;
-    if (!user || !user.email || !session) {
-      throw new SystemError("ユーザー登録で想定外のエラーが発生しました");
+    const { user: member, session } = data;
+    if (!member || !member.email || !session) {
+      throw new SystemError("会員登録で想定外のエラーが発生しました");
     }
 
     const result: Result = {
-      user: {
-        id: user.id,
-        email: user.email,
+      member: {
+        id: member.id,
+        email: member.email,
       },
       session: {
         accessToken: session.access_token,

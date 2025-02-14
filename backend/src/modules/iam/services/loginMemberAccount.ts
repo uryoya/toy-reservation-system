@@ -7,7 +7,7 @@ export type Command = {
 };
 
 export type Result = {
-  user: {
+  member: {
     id: string;
     email: string;
   };
@@ -20,7 +20,7 @@ export type Result = {
 /**
  * ユーザーログイン
  */
-export class LoginUserAccount {
+export class LoginMemberAccount {
   constructor(private readonly supabase: SupabaseClient) {}
 
   async execute(command: Command): Promise<Result> {
@@ -31,18 +31,18 @@ export class LoginUserAccount {
     if (error) {
       throw new UnauthenticatedError(error.message, { cause: error });
     }
-    const { user, session } = data;
-    if (!user.email || !user.user_metadata?.role) {
+    const { user: member, session } = data;
+    if (!member.email || !member.user_metadata?.role) {
       throw new SystemError("認証で想定外のエラーが発生しました");
     }
-    if (user.user_metadata.role !== "USER") {
+    if (member.user_metadata.role !== "MEMBER") {
       throw new UnauthenticatedError("ログインできません");
     }
 
     const result: Result = {
-      user: {
-        id: user.id,
-        email: user.email,
+      member: {
+        id: member.id,
+        email: member.email,
       },
       session: {
         accessToken: session.access_token,
